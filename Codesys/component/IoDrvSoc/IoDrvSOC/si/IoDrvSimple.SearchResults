@@ -1,0 +1,8 @@
+---- s_pIBase Matches (9 in 1 files) ----
+IoDrvSimple.c (D:\Work\进行中\Glodon\Codesys\Cheery_0x1_ARM_VxWorks_V3.5.11.20\Templates\IoDrvSimple) line 39 : static IBase *s_pIBase;
+HookFunction in IoDrvSimple.c (D:\Work\进行中\Glodon\Codesys\Cheery_0x1_ARM_VxWorks_V3.5.11.20\Templates\IoDrvSimple) : 			s_pIBase = (IBase *)pTmp;
+HookFunction in IoDrvSimple.c (D:\Work\进行中\Glodon\Codesys\Cheery_0x1_ARM_VxWorks_V3.5.11.20\Templates\IoDrvSimple) : 			CAL_IoMgrRegisterInstance(s_pIBase, NULL);
+HookFunction in IoDrvSimple.c (D:\Work\进行中\Glodon\Codesys\Cheery_0x1_ARM_VxWorks_V3.5.11.20\Templates\IoDrvSimple) : 			CAL_IoMgrUnregisterInstance(s_pIBase);
+HookFunction in IoDrvSimple.c (D:\Work\进行中\Glodon\Codesys\Cheery_0x1_ARM_VxWorks_V3.5.11.20\Templates\IoDrvSimple) : 			pI = (ICmpIoDrv *)s_pIBase->QueryInterface(s_pIBase, ITFID_ICmpIoDrv, NULL);
+HookFunction in IoDrvSimple.c (D:\Work\进行中\Glodon\Codesys\Cheery_0x1_ARM_VxWorks_V3.5.11.20\Templates\IoDrvSimple) : 			s_pIBase->Release(s_pIBase);
+HookFunction in IoDrvSimple.c (D:\Work\进行中\Glodon\Codesys\Cheery_0x1_ARM_VxWorks_V3.5.11.20\Templates\IoDrvSimple) : 			DeleteInstance(s_pIBase);

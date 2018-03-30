@@ -1,0 +1,351 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<DeviceDescription xmlns="http://www.3s-software.com/schemas/DeviceDescription-1.0.xsd" xmlns:ts="http://www.3s-software.com/schemas/TargetSettings-0.1.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <Strings namespace="local">
+    <Language lang="en">
+      <String identifier="ModelName">IoDrvSpiIO</String>
+      <String identifier="SOC Board Test Driver"></String>
+      <String identifier="VendorName">Hitech</String>
+      <String identifier="typename">MyDevice_With_Libs</String>
+      <String identifier="typedescription">SOC Device</String>
+    </Language>
+  </Strings>
+  <Device hideInCatalogue="false">
+    <DeviceIdentification>
+      <Type>40100</Type>
+      <Id>0000 8100</Id>
+      <Version>1.0.0.0</Version>
+    </DeviceIdentification>
+    <DeviceInfo>
+      <Name name="local:ModelName">IoDrvSpiIO</Name>
+      <Description name="local:DeviceDescription">Spi Board IO Driver</Description>
+      <Vendor name="local:VendorName">Hitech</Vendor>
+      <OrderNumber>???</OrderNumber>
+    </DeviceInfo>
+    <Connector moduleType="257" interface="Common.PCI" role="child" explicit="false" connectorId="1" hostpath="-1">
+      <InterfaceName name="local:PCI">PCI-Bus</InterfaceName>
+      <Slot count="1" allowEmpty="false"></Slot>
+    </Connector>
+    <Connector moduleType="40100" interface="Hitech:Internal" role="parent" explicit="false" connectorId="2" hostpath="1">
+      <InterfaceName name="local:DP">Internal</InterfaceName>
+      <Var max="125"></Var>
+      <DriverInfo needsBusCycle="true"></DriverInfo>
+      <HostParameterSet>
+	    <Parameter ParameterId="1000" type="std:BOOL">
+          <Attributes channel="input" download="true" functional="false" offlineaccess="readwrite" onlineaccess="readwrite" />
+          <Default>0</Default>
+          <Name name="local:in">spi1in1</Name>
+        </Parameter>
+	    <Parameter ParameterId="1001" type="std:BOOL">
+          <Attributes channel="input" download="true" functional="false" offlineaccess="readwrite" onlineaccess="readwrite" />
+          <Default>0</Default>
+          <Name name="local:in">spi1in2</Name>
+        </Parameter>
+	    <Parameter ParameterId="1002" type="std:BOOL">
+          <Attributes channel="input" download="true" functional="false" offlineaccess="readwrite" onlineaccess="readwrite" />
+          <Default>0</Default>
+          <Name name="local:in">spi1in3</Name>
+        </Parameter>
+	    <Parameter ParameterId="1003" type="std:BOOL">
+          <Attributes channel="input" download="true" functional="false" offlineaccess="readwrite" onlineaccess="readwrite" />
+          <Default>0</Default>
+          <Name name="local:in">spi1in4</Name>
+        </Parameter>
+	    <Parameter ParameterId="1004" type="std:BOOL">
+          <Attributes channel="input" download="true" functional="false" offlineaccess="readwrite" onlineaccess="readwrite" />
+          <Default>0</Default>
+          <Name name="local:in">spi1in5</Name>
+        </Parameter>
+	    <Parameter ParameterId="1005" type="std:BOOL">
+          <Attributes channel="input" download="true" functional="false" offlineaccess="readwrite" onlineaccess="readwrite" />
+          <Default>0</Default>
+          <Name name="local:in">spi1in6</Name>
+        </Parameter>
+	    <Parameter ParameterId="1006" type="std:BOOL">
+          <Attributes channel="input" download="true" functional="false" offlineaccess="readwrite" onlineaccess="readwrite" />
+          <Default>0</Default>
+          <Name name="local:in">spi1in7</Name>
+        </Parameter>    
+	    <Parameter ParameterId="1007" type="std:BOOL">
+          <Attributes channel="input" download="true" functional="false" offlineaccess="readwrite" onlineaccess="readwrite" />
+          <Default>0</Default>
+          <Name name="local:in">spi1in8</Name>
+        </Parameter>           
+	    <Parameter ParameterId="1008" type="std:BOOL">
+          <Attributes channel="input" download="true" functional="false" offlineaccess="readwrite" onlineaccess="readwrite" />
+          <Default>0</Default>
+          <Name name="local:in">spi1in9</Name>
+        </Parameter>
+	    <Parameter ParameterId="1009" type="std:BOOL">
+          <Attributes channel="input" download="true" functional="false" offlineaccess="readwrite" onlineaccess="readwrite" />
+          <Default>0</Default>
+          <Name name="local:in">spi1in10</Name>
+        </Parameter>
+	    <Parameter ParameterId="1010" type="std:BOOL">
+          <Attributes channel="input" download="true" functional="false" offlineaccess="readwrite" onlineaccess="readwrite" />
+          <Default>0</Default>
+          <Name name="local:in">spi1in11</Name>
+        </Parameter>
+	    <Parameter ParameterId="1011" type="std:BOOL">
+          <Attributes channel="input" download="true" functional="false" offlineaccess="readwrite" onlineaccess="readwrite" />
+          <Default>0</Default>
+          <Name name="local:in">spi1in12</Name>
+        </Parameter>
+	    <Parameter ParameterId="1012" type="std:BOOL">
+          <Attributes channel="input" download="true" functional="false" offlineaccess="readwrite" onlineaccess="readwrite" />
+          <Default>0</Default>
+          <Name name="local:in">spi1in13</Name>
+        </Parameter>
+	    <Parameter ParameterId="1013" type="std:BOOL">
+          <Attributes channel="input" download="true" functional="false" offlineaccess="readwrite" onlineaccess="readwrite" />
+          <Default>0</Default>
+          <Name name="local:in">spi1in14</Name>
+        </Parameter>
+	    <Parameter ParameterId="1014" type="std:BOOL">
+          <Attributes channel="input" download="true" functional="false" offlineaccess="readwrite" onlineaccess="readwrite" />
+          <Default>0</Default>
+          <Name name="local:in">spi1in15</Name>
+        </Parameter>    
+	    <Parameter ParameterId="1015" type="std:BOOL">
+          <Attributes channel="input" download="true" functional="false" offlineaccess="readwrite" onlineaccess="readwrite" />
+          <Default>0</Default>
+          <Name name="local:in">spi1in16</Name>
+        </Parameter>
+        
+	    <Parameter ParameterId="1016" type="std:BOOL">
+          <Attributes channel="input" download="true" functional="false" offlineaccess="readwrite" onlineaccess="readwrite" />
+          <Default>0</Default>
+          <Name name="local:in">spi2in1</Name>
+        </Parameter>
+	    <Parameter ParameterId="1017" type="std:BOOL">
+          <Attributes channel="input" download="true" functional="false" offlineaccess="readwrite" onlineaccess="readwrite" />
+          <Default>0</Default>
+          <Name name="local:in">spi2in2</Name>
+        </Parameter>
+	    <Parameter ParameterId="1018" type="std:BOOL">
+          <Attributes channel="input" download="true" functional="false" offlineaccess="readwrite" onlineaccess="readwrite" />
+          <Default>0</Default>
+          <Name name="local:in">spi2in3</Name>
+        </Parameter>
+	    <Parameter ParameterId="1019" type="std:BOOL">
+          <Attributes channel="input" download="true" functional="false" offlineaccess="readwrite" onlineaccess="readwrite" />
+          <Default>0</Default>
+          <Name name="local:in">spi2in4</Name>
+        </Parameter>
+	    <Parameter ParameterId="1020" type="std:BOOL">
+          <Attributes channel="input" download="true" functional="false" offlineaccess="readwrite" onlineaccess="readwrite" />
+          <Default>0</Default>
+          <Name name="local:in">spi2in5</Name>
+        </Parameter>
+	    <Parameter ParameterId="1021" type="std:BOOL">
+          <Attributes channel="input" download="true" functional="false" offlineaccess="readwrite" onlineaccess="readwrite" />
+          <Default>0</Default>
+          <Name name="local:in">spi2in6</Name>
+        </Parameter>
+	    <Parameter ParameterId="1022" type="std:BOOL">
+          <Attributes channel="input" download="true" functional="false" offlineaccess="readwrite" onlineaccess="readwrite" />
+          <Default>0</Default>
+          <Name name="local:in">spi2in7</Name>
+        </Parameter>    
+	    <Parameter ParameterId="1023" type="std:BOOL">
+          <Attributes channel="input" download="true" functional="false" offlineaccess="readwrite" onlineaccess="readwrite" />
+          <Default>0</Default>
+          <Name name="local:in">spi2in8</Name>
+        </Parameter>
+	    <Parameter ParameterId="1024" type="std:BOOL">
+          <Attributes channel="input" download="true" functional="false" offlineaccess="readwrite" onlineaccess="readwrite" />
+          <Default>0</Default>
+          <Name name="local:in">spi2in9</Name>
+        </Parameter>
+	    <Parameter ParameterId="1025" type="std:BOOL">
+          <Attributes channel="input" download="true" functional="false" offlineaccess="readwrite" onlineaccess="readwrite" />
+          <Default>0</Default>
+          <Name name="local:in">spi2in10</Name>
+        </Parameter>
+	    <Parameter ParameterId="1026" type="std:BOOL">
+          <Attributes channel="input" download="true" functional="false" offlineaccess="readwrite" onlineaccess="readwrite" />
+          <Default>0</Default>
+          <Name name="local:in">spi2in11</Name>
+        </Parameter>    
+	    <Parameter ParameterId="1027" type="std:BOOL">
+          <Attributes channel="input" download="true" functional="false" offlineaccess="readwrite" onlineaccess="readwrite" />
+          <Default>0</Default>
+          <Name name="local:in">spi2in12</Name>
+        </Parameter>
+                                
+        <Parameter ParameterId="2000" type="std:BOOL">
+          <Attributes channel="output" download="true" functional="false" offlineaccess="readwrite" onlineaccess="readwrite" />
+          <Default>0</Default>
+          <Name name="local:out">spi1out1</Name>
+        </Parameter>
+        <Parameter ParameterId="2001" type="std:BOOL">
+          <Attributes channel="output" download="true" functional="false" offlineaccess="readwrite" onlineaccess="readwrite" />
+          <Default>0</Default>
+          <Name name="local:out">spi1out2</Name>
+        </Parameter>
+        <Parameter ParameterId="2002" type="std:BOOL">
+          <Attributes channel="output" download="true" functional="false" offlineaccess="readwrite" onlineaccess="readwrite" />
+          <Default>0</Default>
+          <Name name="local:out">spi1out3</Name>
+        </Parameter>
+        <Parameter ParameterId="2003" type="std:BOOL">
+          <Attributes channel="output" download="true" functional="false" offlineaccess="readwrite" onlineaccess="readwrite" />
+          <Default>0</Default>
+          <Name name="local:out">spi1out4</Name>
+        </Parameter>
+        <Parameter ParameterId="2004" type="std:BOOL">
+          <Attributes channel="output" download="true" functional="false" offlineaccess="readwrite" onlineaccess="readwrite" />
+          <Default>0</Default>
+          <Name name="local:out">spi1out5</Name>
+        </Parameter>
+        <Parameter ParameterId="2005" type="std:BOOL">
+          <Attributes channel="output" download="true" functional="false" offlineaccess="readwrite" onlineaccess="readwrite" />
+          <Default>0</Default>
+          <Name name="local:out">spi1out6</Name>
+        </Parameter>
+        <Parameter ParameterId="2006" type="std:BOOL">
+          <Attributes channel="output" download="true" functional="false" offlineaccess="readwrite" onlineaccess="readwrite" />
+          <Default>0</Default>
+          <Name name="local:out">spi1out7</Name>
+        </Parameter>
+        <Parameter ParameterId="2007" type="std:BOOL">
+          <Attributes channel="output" download="true" functional="false" offlineaccess="readwrite" onlineaccess="readwrite" />
+          <Default>0</Default>
+          <Name name="local:out">spi1out8</Name>
+        </Parameter>
+        <Parameter ParameterId="2008" type="std:BOOL">
+          <Attributes channel="output" download="true" functional="false" offlineaccess="readwrite" onlineaccess="readwrite" />
+          <Default>0</Default>
+          <Name name="local:out">spi1out9</Name>
+        </Parameter>
+        <Parameter ParameterId="2009" type="std:BOOL">
+          <Attributes channel="output" download="true" functional="false" offlineaccess="readwrite" onlineaccess="readwrite" />
+          <Default>0</Default>
+          <Name name="local:out">spi1out10</Name>
+        </Parameter>
+        <Parameter ParameterId="2010" type="std:BOOL">
+          <Attributes channel="output" download="true" functional="false" offlineaccess="readwrite" onlineaccess="readwrite" />
+          <Default>0</Default>
+          <Name name="local:out">spi1out11</Name>
+        </Parameter>
+        <Parameter ParameterId="2011" type="std:BOOL">
+          <Attributes channel="output" download="true" functional="false" offlineaccess="readwrite" onlineaccess="readwrite" />
+          <Default>0</Default>
+          <Name name="local:out">spi1out12</Name>
+        </Parameter>
+        <Parameter ParameterId="2012" type="std:BOOL">
+          <Attributes channel="output" download="true" functional="false" offlineaccess="readwrite" onlineaccess="readwrite" />
+          <Default>0</Default>
+          <Name name="local:out">spi1out13</Name>
+        </Parameter>
+        <Parameter ParameterId="2013" type="std:BOOL">
+          <Attributes channel="output" download="true" functional="false" offlineaccess="readwrite" onlineaccess="readwrite" />
+          <Default>0</Default>
+          <Name name="local:out">spi1out14</Name>
+        </Parameter>
+        <Parameter ParameterId="2014" type="std:BOOL">
+          <Attributes channel="output" download="true" functional="false" offlineaccess="readwrite" onlineaccess="readwrite" />
+          <Default>0</Default>
+          <Name name="local:out">spi1out15</Name>
+        </Parameter>
+        <Parameter ParameterId="2015" type="std:BOOL">
+          <Attributes channel="output" download="true" functional="false" offlineaccess="readwrite" onlineaccess="readwrite" />
+          <Default>0</Default>
+          <Name name="local:out">spi1out16</Name>
+        </Parameter>
+        <Parameter ParameterId="2016" type="std:BOOL">
+          <Attributes channel="output" download="true" functional="false" offlineaccess="readwrite" onlineaccess="readwrite" />
+          <Default>0</Default>
+          <Name name="local:out">spi2out1</Name>
+        </Parameter>
+        <Parameter ParameterId="2017" type="std:BOOL">
+          <Attributes channel="output" download="true" functional="false" offlineaccess="readwrite" onlineaccess="readwrite" />
+          <Default>0</Default>
+          <Name name="local:out">spi2out2</Name>
+        </Parameter>
+        <Parameter ParameterId="2018" type="std:BOOL">
+          <Attributes channel="output" download="true" functional="false" offlineaccess="readwrite" onlineaccess="readwrite" />
+          <Default>0</Default>
+          <Name name="local:out">spi2out3</Name>
+        </Parameter>
+        <Parameter ParameterId="2019" type="std:BOOL">
+          <Attributes channel="output" download="true" functional="false" offlineaccess="readwrite" onlineaccess="readwrite" />
+          <Default>0</Default>
+          <Name name="local:out">spi2out4</Name>
+        </Parameter>
+        <Parameter ParameterId="2020" type="std:BOOL">
+          <Attributes channel="output" download="true" functional="false" offlineaccess="readwrite" onlineaccess="readwrite" />
+          <Default>0</Default>
+          <Name name="local:out">spi2out5</Name>
+        </Parameter>
+        <Parameter ParameterId="2021" type="std:BOOL">
+          <Attributes channel="output" download="true" functional="false" offlineaccess="readwrite" onlineaccess="readwrite" />
+          <Default>0</Default>
+          <Name name="local:out">spi2out6</Name>
+        </Parameter>
+        <Parameter ParameterId="2022" type="std:BOOL">
+          <Attributes channel="output" download="true" functional="false" offlineaccess="readwrite" onlineaccess="readwrite" />
+          <Default>0</Default>
+          <Name name="local:out">spi2out7</Name>
+        </Parameter>
+        <Parameter ParameterId="2023" type="std:BOOL">
+          <Attributes channel="output" download="true" functional="false" offlineaccess="readwrite" onlineaccess="readwrite" />
+          <Default>0</Default>
+          <Name name="local:out">spi2out8</Name>
+        </Parameter>
+        <Parameter ParameterId="2024" type="std:BOOL">
+          <Attributes channel="output" download="true" functional="false" offlineaccess="readwrite" onlineaccess="readwrite" />
+          <Default>0</Default>
+          <Name name="local:out">spi2out9</Name>
+        </Parameter>
+        <Parameter ParameterId="2025" type="std:BOOL">
+          <Attributes channel="output" download="true" functional="false" offlineaccess="readwrite" onlineaccess="readwrite" />
+          <Default>0</Default>
+          <Name name="local:out">spi2out10</Name>
+        </Parameter>
+        <Parameter ParameterId="2026" type="std:BOOL">
+          <Attributes channel="output" download="true" functional="false" offlineaccess="readwrite" onlineaccess="readwrite" />
+          <Default>0</Default>
+          <Name name="local:out">spi2out11</Name>
+        </Parameter>
+        <Parameter ParameterId="2027" type="std:BOOL">
+          <Attributes channel="output" download="true" functional="false" offlineaccess="readwrite" onlineaccess="readwrite" />
+          <Default>0</Default>
+          <Name name="local:out">spi2out12</Name>
+        </Parameter>
+        <Parameter ParameterId="2028" type="std:BOOL">
+          <Attributes channel="output" download="true" functional="false" offlineaccess="readwrite" onlineaccess="readwrite" />
+          <Default>0</Default>
+          <Name name="local:out">spi2out13</Name>
+        </Parameter>
+        <Parameter ParameterId="2029" type="std:BOOL">
+          <Attributes channel="output" download="true" functional="false" offlineaccess="readwrite" onlineaccess="readwrite" />
+          <Default>0</Default>
+          <Name name="local:out">spi2out14</Name>
+        </Parameter>
+        <Parameter ParameterId="2030" type="std:BOOL">
+          <Attributes channel="output" download="true" functional="false" offlineaccess="readwrite" onlineaccess="readwrite" />
+          <Default>0</Default>
+          <Name name="local:out">spi2out15</Name>
+        </Parameter>
+        <Parameter ParameterId="2031" type="std:BOOL">
+          <Attributes channel="output" download="true" functional="false" offlineaccess="readwrite" onlineaccess="readwrite" />
+          <Default>0</Default>
+          <Name name="local:out">spi2out16</Name>          
+        </Parameter>
+                                                                       
+        <Parameter ParameterId="393218" type="std:STRING">
+          <Attributes channel="none" download="true" functional="false" offlineaccess="write" onlineaccess="read" />
+          <Default>'Hitech'</Default>
+          <Name name="local:Id393218">Vendor</Name>
+          <Description name="local:Id393218.Desc">Vendor of the device</Description>
+        </Parameter>
+        <Parameter ParameterId="393219" type="std:STRING">
+          <Attributes channel="none" download="true" functional="false" offlineaccess="write" onlineaccess="read" />
+          <Default>'SPI IO Device'</Default>
+          <Name name="local:Id393219">ModelName</Name>
+          <Description name="local:Id393219.Desc">Model name of the device</Description>
+        </Parameter>
+      </HostParameterSet>
+    </Connector>
+  </Device>
+</DeviceDescription>

@@ -1,0 +1,3 @@
+set WIND_BASE D:/WindRiver/vxworks-6.9
+set VSB_DIR D:/WindRiver/vxworks-6.9/target/lib
+set ANALYSIS_DKM_DIR D:/WindRiver/vxworks-6.9/target/lib/arm/ARMARCH7/common/dkm/analysis

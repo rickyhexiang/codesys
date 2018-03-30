@@ -1,0 +1,1036 @@
+\" xlnx_zynq7k/target.ref - Xilinx Zynq-7000 target specific documentation
+\"
+\" Copyright (c) 2011-2015 Wind River Systems, Inc.
+\"
+\" The right to copy, distribute, modify or otherwise make use
+\" of this software may be licensed only pursuant to the terms
+\" of an applicable Wind River license agreement.
+\"
+\" modification history
+\" --------------------
+\" 04jan15,c_l  Add 32MBytes of flash support for ZC706. (VXW6-23897)
+\" 31jul14,c_l  add description of DRV_ARM_GLOBAL_TIMER. (VXW6-83146)
+\" 19may14,y_c  add description of INCLUDE_BOOT_FILESYSTEMS. (VXW6-82658)
+\" 28apr14,c_l  update description to support OCD. (VXW6-80768)
+\" 22apr14,g_x  update description to support new bootgen (VXW6-81785)
+\" 24mar14,xms  add support for FMC extension board. (VXW6-70152)
+\" 21jan14,c_l  update DMA description.
+\" 01n,09aug13,c_l  add description of how to create bootApp. (WIND00426895)
+\" 01m,09aug13,c_l  update description of how to create a bif file. 
+                    (WIND00429866)
+\" 01l,31jul18,y_c  update DEVC description.
+\" 01k,31may13,y_c  add description of how to use TTC.(WIND00416933)
+\" 01j,31may13,y_c  SDHC description modification.(WIND00415129)
+\" 01i,29may13,y_c  add support for the Programmable Logic.(WIND00417766)
+\" 01h,19apr13,y_c  change description for 1G ram support.(WIND00400701)
+\" 01g,22apr13,zgl  removed ata/sata relative description.(WIND00413542)
+\" 01f,19apr13,y_c  add support for ZC706 board.(WIND00395225)
+\" 01e,30jan13,ljg  add USB TCD support.
+\" 01d,07dec12,swu  WIND00387451 - update known issue.
+\" 01c,15sep12,fao  update for uprev release.
+\" 01b,15jun12,fao  update for the first release.
+\" 01a,17jun11,rab  created from arm_a9_ctx rev 01a
+\"
+\TITLE xlnx_zynq7k - Xilinx Zynq-7000
+
+\sh NAME
+`Xilinx Zynq-7000 board with CortexA9 MPCore'
+
+EXTERNAL DEPENDENCIES
+None
+
+INTRODUCTION
+This section includes getting-started information, including subsections
+detailing ROM installation, boot ROM flash instructions, and jumper
+settings for VxWorks operation.
+
+\sh USB2UART
+This section will guide you how to connect uart on the Xilinx Zynq-7000 board.
+The board uart is usb port, the USB2UART driver need to install on host.
+
+Please follow "ZC706 Getting Started Guide(UG961)" to install the driver(it also can work with ZC702)
+http://www.xilinx.com/support/documentation/boards_and_kits/zynq-7000/zc706_gsg/
+v1_0/ug961-zc706-evaluation-board-gsg.pdf
+
+For windows, please download driver from:
+http://www.silabs.com/products/mcu/Pages/USBtoUARTBridgeVCPDrivers.aspx
+
+For ubuntu linux, please follow this page:
+http://pharos.ece.utexas.edu/wiki/index.php/Fixing_the_cp210x_open_-_Unable_to_enable_UART_Error_-_04/17/2011
+
+For other linux, please download driver from xilinx:
+https://secure.xilinx.com/webreg/clickthrough.do?cid=103670
+
+\sh Getting the board running VxWorks
+This section will guide you how to run VxWorks on the Xilinx Zynq-7000 board.
+
+1. Configuring Boot Option Switches
+
+Default Switch Settings:
+
+For ZC702:
+\ts
+Switch Number   | Switch ON           | Switch OFF
+--------------------------------------------------
+SW10            | 1,2                 |
+SW12            | 1,2                 |
+SW15            | 1,2                 |
+
+\te
+
+For ZC706:
+\ts
+Switch Number   | Switch ON           | Switch OFF
+--------------------------------------------------
+SW4             | 1,2                 |
+SW12            |                     | 1,2,3,4,5 
+
+\te
+
+1.1 Boot from QSPI
+\ts
+Switch Number          | Switch ON           | Switch OFF
+--------------------------------------------------
+SW16(SW11 for ZC706)   | 4                   | 1,2,5
+
+\te
+
+1.2 Boot from SD card
+\ts
+Switch Number          | Switch ON           | Switch OFF
+--------------------------------------------------
+SW16(SW11 for ZC706)   | 3,4                 | 1,2,5
+
+\te
+
+2. Configuring Serial Connection
+
+   On the PC, start a terminal emulator program such as
+   TeraTerm or HyperTerm to talk to the connected PC
+   port with the following settings (connect to UART on
+   target board, see board layout at the end of this
+   document):
+
+    Baud Rate   : 115200
+    Data        : 8 bit
+    Parity      : None
+    Stop        : 1 bit
+    Flow Control: None
+
+3. Building the bootrom image
+
+3.1 Get bootgen tool
+
+  The VxWorks native bootrom needs to be packaged by a Xilinx tool 'bootgen' 
+  before programming to the SD card. For how to get 'bootgen', please contact
+  your Xilinx representative.
+
+3.2 Get First Stage BootLoader(FSBL) elf file
+
+  For ZC702 board, Download 14.1-release.tar.gz from xilinx site. The download URL is
+  http://xilinx.wdfiles.com/local--files/zynq-release-14-1/14.1-release.tar.gz
+  when this BSP is released. The file name is zynq_fsbl_0.elf.
+
+  For ZC706 board, Download 14.4-release.tar.gz from xilinx site. The download URL is
+  http://xilinx.wdfiles.com/local--files/zynq-release-14-4/14.4-release.tar.gz
+  when this BSP is released. The file name is fsbl.elf in zc706 folder.
+
+3.3 Create bin image
+
+  3.3.1 Create bootrom.bin
+
+        Open a VxWorks Development Shell and type the following commands:
+
+\cs
+        cd $(WIND_BASE)/target/config/xlnx_zynq7k
+        make clean
+        make bootrom.bin
+\ce
+
+        A file with name "bootrom.bin" will be created after the commands complete. 
+
+  3.3.2 Create bootapp.bin
+        When using PROFILE_BOOTAPP to create a boot loader, you should set the 
+        project to build a ROM image. Sample for how to create a bootApp boot 
+        loader from SD card:
+
+        Open a VxWorks Development Shell and type the following commands:
+
+\cs
+        cd $(WIND_BASE)/target/proj
+        vxprj create xlnx_zynq7k diab bootapp_zynq -profile PROFILE_BOOTAPP
+        cd booapp_zynq/
+        vxprj component add DRV_STORAGE_SDHC INCLUDE_BOOT_FILESYSTEMS INCLUDE_DOSFS
+        vxprj build set default_romCompress 
+        vxprj build vxWorks_romCompress.bin 
+\ce
+
+        A file with name "vxWorks_romCompress.bin" will be created after the commands 
+        complete. Rename this file to bootapp.bin.
+
+        Note: the bootapp.bin is the same steps as below, just replace bootrom.bin
+        with bootapp.bin.
+
+3.4 Create a bif file
+   A bif file is a txt format file used by bootgen tool to create BOOT.BIN
+   Sample for ZC702:
+\cs
+the_ROM_image:
+    {
+        [bootloader]zynq_fsbl_0.elf
+        [load = 0x0fc00000, startup = 0x0fc00000]bootrom.bin
+    }
+\ce
+
+   Sample for ZC706:
+\cs
+the_ROM_image:
+    {
+        [bootloader]fsbl.elf
+        [load = 0x0fc00000, startup = 0x0fc00000]bootrom.bin
+    }
+\ce
+
+3.5 Create BOOT.BIN
+  copy bootrom.bin, zynq_fsbl_0.elf(or fsbl.elf) and bif file to bootgen directory
+  run command:
+\cs
+        bootgen -image xxx.bif -o i BOOT.BIN
+\ce
+
+  Note: xxx.bif is the name of the file you just created in chapter 3.4 above.
+
+3.6 Boot from SD card
+   Copy BOOT.BIN to the root directory of a SD card.
+
+   Insert the SD card and power up the board, you will get VxWorks bootrom running.
+
+3.7 Programming on board QSPI FLASH
+
+    Rename BOOT.Bin to bootrom.bin, then copy u-boot BOOT.BIN to the root directory
+    of a SD card. Type the following commands in the U-Boot shell.
+
+\cs
+    mmcinfo;fatload mmc 0 0x8000000 bootrom.bin
+    sf probe 0
+    sf erase 0 0x0100000
+    sf write 0x08000000 0 0x0FFFFF
+\ce
+
+    Note: if the bootrom size exceeds 0x100000 (1M), you should erase
+    one or more sectors and program more data to flash, for example:
+
+\cs
+    sf erase 0 0x0200000
+    sf write 0x08000000 0 0x1FFFFF
+\ce
+
+    change the switch settings to boot from qspi flash setting and reset board.
+
+FEATURES
+
+This section describes all features of the board, supported or not.
+It documents all configurations of the board and the interaction between
+features and configuration items.
+
+\sh Supported Features
+
+\sh List of hardware features (Xilinx Zynq-7000 board)
+
+\ts
+Hardware Interface       | Controller      | Driver/Component         | Status
+------------------------------------------------------------------------------
+UART                     | on-chip         | DRV_SIO_ZYNQ7K           | SUPPORTED
+10/100/1000MB-ETHERNET   | on-chip         | DRV_VXBEND_ZYNQMAC       | SUPPORTED
+TIMER                    | on-chip         | DRV_ARM_MPCORE_TIMER     | SUPPORTED
+                         | on-chip         | DRV_ARM_GLOBAL_TIMER     | SUPPORTED
+SDHC                     | on-chip         | DRV_STORAGE_SDHC         | SUPPORTED
+I2C                      | on-chip         | DRV_I2CBUS_ZYNQ7K        | SUPPORTED
+QSPI                     | on-chip         | qspiFlashMem.c           | SUPPORTED
+QSPI-FLASH               | on-chip         | qspiFlashMem.c           | SUPPORTED
+USB-HOST                 | on-chip         | USB STACK                | SUPPORTED
+USB-TARGET               | on-chip         | USB STACK                | SUPPORTED
+RTC                      | on-chip         | DRV_I2C_PCFRTC           | SUPPORTED
+DMA                      | on-chip         | DRV_DMA_PL330            | SUPPORTED
+EEPROM                   | on-chip         | DRV_I2C_EEPROM           | SUPPORTED
+TTC                      | on-chip         | DRV_TIMER_ZYNQ7K         | SUPPORTED
+DEVC                     | on-chip         | DRV_RESOURCE_ZYNQ7K_DEVC | SUPPORTED
+AWDT                     | on-chip         |                          | UNSUPPORTED
+SWDT                     | on-chip         |                          | UNSUPPORTED
+NOR                      | on-chip         |                          | UNSUPPORTED
+SPI                      | on-chip         |                          | UNSUPPORTED
+XADC                     | on-chip         |                          | UNSUPPORTED
+CAN                      | on-chip         |                          | UNSUPPORTED
+PCIE                     | on-chip         |                          | UNSUPPORTED
+Watchdog Module          | on-chip         |                          | UNSUPPORTED
+\te
+
+\sh List of features (ARM Cortex-A9 CPU)
+\ts
+Module        | Status
+--------------------------
+FPU(VFPv3)    | SUPPORTED
+L2 cache      | SUPPORTED
+\te
+
+\sh Feature Interactions
+Refer to the board vendor's documentation.
+
+HARDWARE DETAILS
+This section discusses memory maps for each bus.
+
+\sh Memory Maps
+The default memory map of this BSP is as bellows:
+
+\ts
+Start       | Size  | End         | Access to
+---------------------------------------------
+0x0000_0000 | 1M    | 0x000F_FFFF | OCM
+0x0010_0000 | 1019M | 0x3FBF_FFFF | DDR3 SDRAM
+0x0FC0_0000 | 4MB   | 0x0FFF_FFFF | ROM
+0x4000_0000 | 1GB   | 0x7FFF_FFFF | PL
+0x8000_0000 | 1GB   | 0xBFFF_FFFF | PL
+0xE000_0000 | 32MB  | 0xE1FF_FFFF | I/O PERIPHERALS
+0xF800_0000 | 6000B | 0xF800_0BFF | SLCR
+0xF8F0_0000 | 16KB  | 0xF800_0BFF | SCU
+0xFC00_0000 | 32MB  | 0xFDFF_FFFF | QSPI FLASH
+0xFFFF_0000 | 4KB   | 0xF800_0BFF | OCM
+\te
+
+\sh Verified Hardware
+This BSP has been verified on Rev D of XILINX ZYNQ-7000 ZC702 board and Rev 1.0
+of XILINX ZYNQ-7000 ZC706 board.
+
+\sh Serial Configuration
+There are one serial ports on the board, provided by two UARTs.
+The default configuration is:
+
+\ts
+    Baud Rate   : 115200
+    Data        : 8 bit
+    Parity      : None
+    Stop        : 1 bit
+    Flow Control: None
+\te
+
+\sh Network and MAC address
+The Gigabit Ethernet MAC is implemented in the Xilinx Zynq-7000 SOC. The current
+GEM hardware supports 10mbs/100mbps/1000mbps.
+
+FMC extension board for Network TB-FMCL-INET is supported. So far only TB-FMCL-INET and
+TB-FMCL-GLAN-B boards have been verified.
+
+\sh SD memory card controller
+The on chip SD/SDIO peripheral controller is supported for standard
+capacity SD memory cards.
+
+To enable SDHC support, make sure the following component is defined
+in config.h before you create the VIP, or add it in your VIP dynamically.
+
+\cs
+    #define DRV_STORAGE_SDHC
+\ce
+
+Selection of interrupt vs. polled mode, are configured by setting the values of 
+'polling' in hwconf.c. For example, to select interrupt mode:
+\cs
+    /@ hwconf.c @/
+    ...
+    struct hcfResource zynqSdhcResources[] = {
+    ...
+        { "polling",             HCF_RES_INT,    { (void *)FALSE } },
+    ...
+    };
+    ...
+\ce
+
+To use SD, file system configuration is usually needed. Please refer to
+"Block Device File System Configuration" chapter below for more details
+about how to use SD on VxWorks file system.
+
+\sh Boot Devices
+The supported boot devices are:
+
+\ts
+    'gem0'    | - Ethernet (100baseTX)
+    `tffs'    | - TFFS
+    `fs'      | - USB
+    `fs'      | - SD
+\te
+
+\sh Boot Methods
+With the current release the native boot is supported.
+
+\sh L2 Cache
+This release of BSP supports L2 cache (PL310). Define INCLUDE_L2_CACHE in
+config.h to enable L2 cache support. L2 cache support is enabled by
+default.
+
+\sh TTC
+TTC(Triple Timer Counters) is supported in this release. It's 
+included and configured automatically when _WRS_CONFIG_SMP is defined. 
+To use it with a customized configuration, follow below steps:
+
+\cs
+Define DRV_TIMER_ZYNQ7K macro in config.h or include it to Kernel Configuration.
+
+Configure as the sample settings below in Kernel Configuration or define them in config.h
+
+SYSCLK_TIMER_NAME: "zynqTimer"
+SYSCLK_TIMER_UNIT: 0
+SYSCLK_TIMER_NUM: 0
+
+AUXCLK_TIMER_NAME: "zynqTimer"
+AUXCLK_TIMER_UNIT: 1
+AUXCLK_TIMER_NUM: 0
+\ce
+
+\sh ARM Global Timer
+ARM Global Timer is supported in this release as the timestamp on SMP. It's 
+included and configured automatically when _WRS_CONFIG_SMP is defined. 
+To use it with a customized configuration, follow below steps:
+
+\cs
+Define DRV_ARM_GLOBAL_TIMER macro in config.h or include it to Kernel Configuration.
+
+Configure as the sample settings below in Kernel Configuration or define them in config.h
+
+TIMESTAMP_TIMER_NAME: "armGlobalTimer"
+TIMESTAMP_TIMER_UNIT: 0
+TIMESTAMP_TIMER_NUM: 0
+\ce
+
+\sh I2C
+I2C interface is supported in this release. The I2C controller uses the interrupt mode by default.
+
+To enable this function, please define the corresponding macro in config.h:
+
+\cs
+    #define INCLUDE_I2C_BUS
+\ce
+
+I2C interface is connected with PCA9548, which is a 8-channel I2C switch. The channels must be
+initialized before accessing I2C device, and this is done in sysHwInit().
+
+\cs
+    vxbI2cByNameWrite("pca9548", 0, 0x1f, 0, 0);
+\ce
+
+PCF8564 is a RTC hardware connected on I2C bus. To use PCF8564, define the following macro
+in config.h:
+
+\cs
+#define DRV_I2C_PCFRTC
+#define INCLUDE_TIMER_RTC
+\ce
+
+Note that according to the current definition in config.h, the two macros will automatically
+be included if INCLUDE_I2C_BUS is defined.
+
+User can use sysRtcSet() and sysRtcGet() to configure RTC device or get its information.
+
+Use of the EEPROM requires the DRV_I2C_EEPROM and INCLUDE_EEPROMDRV driver component.
+Once the INCLUDE_EEPROMDRV was defined, the EEPROM will be used as I/O device, which
+can use the standard I/O routine open(), read(), write(), ioctl(), close()...to access it.
+
+\cs
+#   define DRV_I2C_EEPROM
+#   define INCLUDE_EEPROMDRV
+\ce
+
+
+\sh QSPI Flash
+The Xilinx ZYNQ-7000 QSPI Controller are supported in this release.
+To enable this function, please define the following macro in config.h:
+
+\cs
+    #define INCLUDE_ZYNQ7K_QSPI
+\ce
+
+2 x 16 MBytes Flash ROM (S25FL128SAG) are available on board ZC706 and 
+1 x 16 MBytes Flash ROM (N25Q128) is available on board ZC702. In order 
+to backward compatibility, it is only 16 MBytes are available by default 
+for both ZC702 and ZC706.
+
+Configure as the sample settings below in config.h
+2 x 16 MBytes Flash ROM (S25FL128SAG) are available on board ZC706.
+        #define SPI_FLASH_SIZE           (SZ_32M)
+        #define SPI_BUS_TYPE             SPI_DUAL_8BIT
+
+1 x 16 MBytes Flash ROM (S25FL128SAG) is available on board ZC706.
+        #define SPI_FLASH_SIZE           (SZ_16M)
+        #define SPI_BUS_TYPE             SPI_SINGLE_4BIT 
+
+1 x 16 MBytes Flash ROM (N25Q128) is available on board ZC702.
+        #define SPI_FLASH_SIZE           (SZ_16M)
+        #define SPI_BUS_TYPE             SPI_SINGLE_4BIT
+
+For more details about how to use the QSPI driver, please refer to qspiFlashMem.c 
+in BSP folder.
+
+
+\sh TrueFFS
+The standard Wind River TrueFFS product is supported in this release.
+
+This BSP uses Quad-SPI flash as the TrueFFS media.
+
+Note: Bootloader and TFFS are sharing the same flash part, so please be very
+careful because misusing of TFFS may damage the bootloader and cause the
+board failure to boot up.
+
+To use it, define INCLUDE_TFFS in config.h or your VIP and file system configuration
+is usually needed. Please refer to"Block Device File System Configuration" chapter
+below for more details about how to use TrueFFS device on VxWorks file system.
+
+When using TrueFFS on a new FLASH for the first time, you should format and
+configure the FLASH by using:
+
+\cs
+    sysTffsFormat ();
+    usrTffsConfig (0, 0, "/tffs0");
+\ce
+
+If you are using dosFs, please use
+
+\cs
+    dosfsDiskFormat ("/tffs0");     /@ For VxWorks 6.6 and later version @/
+\ce
+
+Note: If you are running these commands in the VxWorks target shell, please use
+
+\cs
+    sp sysTffsFormat
+\ce
+
+to format the FLASH as it would take long time to complete.
+
+\sh USB
+The Xilinx ZYNQ-7000 has two USB controllers. Only USB0 is wired to an external port on the
+board. This BSP supports USB as a Host and Target controller.
+
+FOR ZYNQ702,706 board, this BSP supports both USB host and target mode.
+
+Switches should be set for USB mode.
+
+For zc702:
+J7:    on : host/otg
+       Off: device
+J33:   1-2: device
+       2-3: host/otg
+
+For zc706:
+J10:   on : host/otg
+       Off: device
+J48:   1-2: device
+       2-3: host/otg
+
+To enable USB host support, make sure the following component is included
+in config.h or your VIP:
+
+\cs
+#define INCLUDE_USB
+\ce
+
+Host mode has only been validated using mass storage target devices.
+
+To enable USB target support, make sure the following component is included
+in config.h or your VIP:
+
+\cs
+#define INCLUDE_FSL_TCD
+\ce
+
+Target mode has only been validated as mass storage device.
+
+To use USB, file system configuration is usually needed. Please refer to
+"Block Device File System Configuration" chapter below for more details
+about how to use USB on VxWorks file system.
+
+For more information, please refer to
+\tb Wind River USB for VxWorks 6 PROGRAMMER'S GUIDE
+
+\sh WindML
+
+The WindML graphics driver provides support for the LogiCVC frame buffer.
+
+WindML requires the FPGA Hardware Bitstream to be programmed to the board.
+The bitstream contains the hardware logic for the LogiCVC display controller.
+The WindML driver has been tested with the following TRD from Xilinx on ZC702.
+
+Zynq-7000 Base Targeted Reference Design 14.1
+
+Other hardware bitstreams will likely require adjustments to the WindML driver.
+To load the bitstream to the board requires the 'system.bit' file that is 
+part of the TRD downloaded from the Xilinx website. 
+
+Edit the bif file as follows:
+
+\cs
+the_ROM_image:
+    {
+        [bootloader]zynq_fsbl_0.elf
+        system.bit
+        bootrom.elf
+    }
+\ce
+
+Build the bootrom as normal. 
+
+WindML also requires the following components to be included in the kernel:
+
+#define INCLUDE_DEVMEM
+#define GLOBAL_VIRT_MEM_REGION_SIZE (0x1000000)
+#define INCLUDE_I2C_BUS
+#define DRV_I2C_GENERIC_DEV
+#define DRV_I2CBUS_ZYNQ7K
+
+\sh DMA
+
+To use DMA to transfer data, you need to define a pointer of structure
+PL330_DMA_CHAN_PARAM and allocate space for it.
+
+\cs
+PL330_DMA_CHAN_PARAM * pChanParam = (PL330_DMA_CHAN_PARAM *)
+                                     malloc (sizeof (PL330_DMA_CHAN_PARAM));
+
+\ce
+
+Configure the structure for memory to memory transfers.
+
+\cs
+    pChanParam->endianSwapSize  = (UINT32)CCR_SWAP_NO;
+    pChanParam->tansferType     = (UINT32)MEM_TO_MEM;
+    pChanParam->dstInc          = (UINT32)CCR_DST_INC;
+    pChanParam->srcInc          = (UINT32)CCR_SRC_INC;
+
+\ce
+
+If using the DMA channel for memory with peripheral transfers, you need to
+configure the structure according to hardware manual.
+
+\cs
+    pChanParam->endianSwapSize  = (UINT32)CCR_SWAP_NO;
+    pChanParam->tansferType     = (UINT32)DEVICE_TO_MEM;
+    pChanParam->dstInc          = (UINT32)CCR_DST_INC;
+    pChanParam->srcInc          = (UINT32)CCR_SRC_FIX;
+    pChanParam->peripheral      = (UINT32)XXXX; (DMA request number of peripheral)
+    
+\ce
+
+Pass pChanParam as the last parameter of function vxbDmaChanAlloc() to allocate
+DMA channel.
+
+\cs
+    dmaRes = vxbDmaChanAlloc (vxbInstByNameFind (PL330_DMA_DRV_NAME, 0),
+                              1,
+                              DMA_TRANSFER_TYPE_RD | DMA_TRANSFER_TYPE_WR,
+                              (void *)pChanParam);
+\ce
+
+If don't need to change DMA parameter, the pChanParam can be set to NULL when
+call vxbDmaChanAlloc();
+
+\cs
+    dmaRes = vxbDmaChanAlloc (vxbInstByNameFind (PL330_DMA_DRV_NAME, 0),
+                              1,
+                              DMA_TRANSFER_TYPE_RD | DMA_TRANSFER_TYPE_WR,
+                              NULL);
+\ce
+
+Then you can call vxbDmaWrite() to send data.
+
+\cs
+vxbDmaWrite(dmaRes, txBuf, rxBuf, dataSize, dataType, flags, callback, params);
+\ce
+
+After data transfer finish, call vxbDmaChanFree() to release the DMA channel.
+
+\cs
+vxbDmaChanFree(dmaRes);
+\ce
+
+Note the vxbDmaRead() and vxbDmaWrite() functions are asynchronous, so you need
+some synchronous mechanism to wait data transfer finish.
+
+\sh DEVC(Device Configuration Interface)
+To enable DEVC function, please define the corresponding macro in config.h or
+include it to Kernel Configuration:
+
+\cs
+    #define DRV_RESOURCE_ZYNQ7K_DEVC
+\ce
+
+The DEVC driver adds a device to VxWorks I/O system, you can see the device name 
+"/devCfg" by using "devs" command in target shell.
+
+To use DEVC loading bitstream to PL, you can use "cp" command in shell to transfer 
+bitstream from bin file on SD card or host to the PL.
+Sample:
+\cs
+cp "/sd0:1/system.bit.bin","/devCfg"
+\ce
+or
+you can use standard I/O API function to transfer bitstream from RAM to the PL.
+Sample:
+\cs
+fd = open ("/devCfg", O_RDWR, 0); 
+write (fd, buff, bufSize);
+close (fd);
+\ce
+
+Note that: 
+1. if you want to "cp" the bin file from SD, you should make sure the SD function
+   is OK(refer to "SD memory card controller" chapter) and place the file on the SD. 
+2. you should use *.bit.bin file instead of *.bit file for loading. To generate the 
+   *.bit.bin:
+ 
+   Edit the bif file as follows:
+\cs
+the_ROM_image:
+    {
+        [bootloader]zynq_fsbl_0.elf
+        system.bit
+        bootrom.elf
+    }
+\ce
+
+   run command:
+\cs
+        bootgen -image xxx.bif -split bin -o i BOOT.BIN
+\ce
+
+3. This BSP has been validated for limited demo Reference Designs from xillin. If a new 
+   Reference Design is generated with the SDK from Xilinx, the BSP code might need to 
+   get adapted to the function correctly.
+
+And DEVC driver provides two APIs for accessing the XADC register, please refer the driver
+manual for detail usage.
+\cs
+zynqXadcRegWrite() and zynqXadcRegRead()
+\ce 
+
+\sh Block Device File System Configuration
+Block devices such as SD/USB are usually used based on file system.
+VxWorks supports 2 kinds of file system: dosFs and HRFS. Below are some
+sample component definitions which can be added in VIP to use dosFs:
+
+\cs
+    #define INCLUDE_DOSFS
+    #define INCLUDE_DOSFS_MAIN
+    #define INCLUDE_DOSFS_CHKDSK
+    #define INCLUDE_DOSFS_FMT
+    #define INCLUDE_DOSFS_FAT
+    #define INCLUDE_DOSFS_SHOW
+    #define INCLUDE_DOSFS_DIR_VFAT
+    #define INCLUDE_DOSFS_DIR_FIXED
+    #define INCLUDE_FS_MONITOR
+    #define INCLUDE_FS_EVENT_UTIL
+    #define INCLUDE_ERF
+    #define INCLUDE_XBD
+    #define INCLUDE_XBD_TRANS
+    #define INCLUDE_DEVICE_MANAGER
+    #define INCLUDE_XBD_BLK_DEV
+    #define INCLUDE_XBD_PART_LIB
+    #define INCLUDE_DISK_UTIL
+\ce
+
+When using a VxWorks block device for the first time, you should format it as
+a FAT file system by using
+\cs
+    dosFsVolFormat ("NameOfTheBlockDevice", 0x20, 0);    /@ FAT32 format @/
+\ce
+or
+\cs
+    dosFsVolFormat ("NameOfTheBlockDevice", 0x10, 0);    /@ FAT16 format @/
+\ce
+
+Then, you can use VxWorks I/O and file system commands to access the block
+device as if it were a disk.  For example, you can copy a vxWorks image from
+your host to the SD card by using file system copy.
+
+\cs
+    copy ("vxWorks", "NameOfTheBlockDevice/vxWorks");
+\ce
+
+NOTE. According to the current design, SD/USB may be shown with different
+name in VxWorks though all of them are block devices from the perspective of
+application. To get the correct device name, use "devs" command in target shell:
+
+\cs
+    devs
+\ce
+
+All available devices will then be displayed with concrete name. Below are some
+typical names of block devices:
+
+\ts
+/sd0:1
+/bd0
+\te
+
+Block device can also be used as the boot device in bootloader, and below
+component must be added for bootrom creation.
+
+\cs
+    #define INCLUDE_BOOT_FILESYSTEMS
+\ce
+
+Below is an example by using USB disk "/bd0" as a boot device:
+
+\cs
+    boot device          : fs
+    unit number          : 0
+    processor number     : 0
+    host name            : host
+    file name            : /bd0/vxWorks
+    inet on ethernet (e) : 192.168.0.3:ffffff00
+    host inet (h)        : 192.168.0.2
+    gateway inet (g)     : 192.168.0.1
+    user (u)             : target
+    ftp password (pw)    : vxTarget
+    flags (f)            : 0x0
+    target name (tn)     :
+    other (o)            : gem0
+\ce
+
+Below is another example by using TrueFFS device as a boot device:
+
+\cs
+    boot device          : tffs=0,0
+    unit number          : 0
+    processor number     : 0
+    host name            : host
+    file name            : /tffs0/vxWorks
+    inet on ethernet (e) : 128.224.163.75:fffff000
+    host inet (h)        : 128.224.162.146
+    gateway inet (g)     : 128.224.162.1
+    user (u)             : user
+    ftp password (pw)    : pass
+    flags (f)            : 0x0
+    target name (tn)     : 
+    other (o)            : gem0
+\ce
+
+\sh Make Targets
+The make targets are listed as the names of object-format files. Append '.hex' to each to derive a
+hex-format file name. Other images not listed here may not be tested.
+
+\ts
+'bootrom'
+'bootrom.bin'
+'bootrom_uncmp.bin'
+'vxWorks' (with 'vxWorks.sym')
+'vxWorks.st'
+\te
+
+\sh BSP Bootloaders and Bootroms
+
+\ts
+Bootloader/Bootrom    | Status
+------------------------------
+Uboot (pre-flashed)   | UNSUPPORTED
+bootrom               | SUPPORTED
+bootrom_uncmp         | SUPPORTED
+vxWorks               | SUPPORTED
+vxWorks_rom           | SUPPORTED
+vxWorks_romCompress   | SUPPORTED
+vxWorks_romResident   | UNSUPPORTED
+\te
+
+\sh BSP Validated Tools
+
+\ts
+Tool                          | Connection/Type   | Status
+----------------------------------------------------------
+Workbench Debugger            | ETHERNET/WDB      | SUPPORTED
+Workbench System Viewer       | ETHERNET/WDB      | SUPPORTED
+Workbench ProfileScope        | ETHERNET/WDB      | SUPPORTED
+Workbench CoverageScope       | ETHERNET/WDB      | SUPPORTED
+Workbench MemScope            | ETHERNET/WDB      | SUPPORTED
+Workbench DataMonitor         | ETHERNET/WDB      | SUPPORTED
+Workbench Core File Analysis  | ETHERNET/WDB      | UNVALIDATED
+Workbench Sensor Points       | ETHERNET/WDB      | UNVALIDATED
+Workbench OCD Debugger        | JTAG              | SUPPORTED
+Workbench OCD Flash(N25Q128)  | JTAG              | SUPPORTED
+\te
+
+\sh Special Routines
+None
+
+\sh SMP
+
+VxWorks SMP(Symmetric Multiprocessing) configuration can be used on this
+multiprocessor hardware platform supported by this BSP. Please refer to
+the chapter "VxWorks SMP" of vxworks_kernel_programmers_guide_6.x.pdf for
+more details about the SMP-specific features from software and hardware view.
+
+Here we list some key features of SMP.
+
+1. SMP build
+
+   VxWorks SMP can be configured and built using the standard Wind River
+   Workbench and vxprj facilities. VxWorks SMP images cannot be created with the
+   legacy BSP directory configuration and build method (using config.h and make).
+
+   Workbench provides a VxWorks Image Project (VIP) option for creating VxWorks
+   SMP projects. The vxprj provides the '-smp' option for configuring and building
+   VxWorks SMP from the command line. For example:
+\cs
+   vxprj create -smp xlnx_zynq7k diab
+\ce
+
+2. Bootloader
+
+   The 'bootrom' image may still be built using the legacy BSP directory and
+   Makefile method. With Workbench, build the 'bootrom' using the same steps
+   as for a UP system. Finally while the 'bootrom' itself cannot be configured for SMP,
+   it will support loading UP, SMP and AMP enabled images.
+
+3. MMU
+
+   VxWorks SMP does not support MMU-less configuration.
+
+4. Cache and bus snoop
+
+   Snoop logic is specific to the hardware architecture, but it's usually supported
+   by a multiprocessor hardware platform.
+
+   Cache can not be disabled in a VxWorks SMP system. I.e, function cacheDisable()
+   directly returns error and does nothing.
+
+   Only copy-back mode is tested and supported officially by WindRiver BSP and VxWorks
+   kernel for SMP system and this is the default configuration in BSP. So system may has
+   unpredictable behavior if you decide to change the cache mode from copy-back to
+   write-through. In addition, there are some other reasons for this restriction. For
+   example, write-through is not supported by VxWorks for PowerPC processors because of
+   the atomic operation, and neither does ARM because of the hardware implementation.
+
+5. Interrupt CPU affinity
+
+   Hardware resources can be allocated via VxWorks configuration. Here we focus on the
+   interrupt to show how it's implemented. SMP hardware usually requires programmable
+   interrupt controller. VxWorks SMP makes use of this hardware to allow assignment
+   interrupts to a specific CPU. By default, interrupts are routed to the VxWorks
+   instance's logical CPU 0. Interrupt CPU affinity can be useful for load balancing,
+   for example, if there is too much total interrupt traffic for one CPU to handle.
+
+   For example, in hwconf.c of this BSP, there is the following data structure:
+
+   struct intrCtlrCpu gicCpu[] = {
+       { INT_VEC_ETH0, 0 },
+   };
+
+   User can reroute the Ethernet interface interrupt to other CPUs by changing 0 to
+   1 or other CPU index.
+
+6. CPU number
+
+   VxWorks project parameter, VX_SMP_NUM_CPUS, is used to represent the CPUs which
+   get involved in the SMP system, as VxWorks supports part of all the CPUs to participate
+   the SMP system and the rests keep reset or idle. The CPU number we are discussing here
+   includes all the hardware units which have the same behavior as CPU, for example, the
+   thread, hyper-thread, etc.
+
+   The maximum CPU number of this BSP is 2.
+
+\sh Known Issue
+
+  1. Part of the SD cards which comply with 1.0 specification may not work stably. So please
+     use SD card which has the capability to support specification 2.0 in the system.
+
+  2. SD card can not be identified infrequently after SMP system boot up.
+
+  3. vxbArmMpCoreTimer.c doesn't support running on cores other than core 0 
+     in SMP mode, operations on timer must be issued from core 0 only. See 
+     WIND00387451 for more details.
+
+  4. Currently, the ZYNQ7K I2C driver does not support read access to pca9548 I2C switch.
+
+BOARD LAYOUT
+
+\bs
+ZC702 board:
++-------------+----+------+------+----------------------+--------+-------------+
+|             |UART|      | USB  |                      | GEM    |             |
+|             +----+      ++------                      +--------+             |
+|                                                                            +-+ 
+|                                                       +--------+           | | 
+|                                                       +--------+           +-+ 
+|                                                                              | 
+|                                                          +-+              +--+ 
+|                           +----------+                   | |              +--+ 
+|                           |          |                   +-+                 | 
+|                           | ZC702    |                   SW10             +--+ 
+|                           |          |                                    |  | 
+|                           |          |               +---------+          +--+ 
+|                           +----------+               |         |             | 
+|                                                      +---------+         +---+ 
+|              +--+                                                        |   | 
+|         SW12 |  |                                                      SD|   | 
+|              +--+                                                        |   | 
+|                                                                          +---+ 
+|              +--+                                                          +-+ 
+|         SW15 |  |                                                       SW2+-+ 
+|              +--+                                                          +-+ 
+|                                                                         SW1+-+ 
++------------------------------------------------------------------------------+
+
+\be
+
+\bs
+ZC706 board:
++-------------+----+------+------+----------------------+--------+-------------+
+|                                                       | SD     |             |
++--+                                                    +--------+             |
+|  |UART                                                                     +-+ 
++--+                                                                     SW1 | | 
+|                                                                            +-+ 
+|                                                                              | 
+|                                                          +-+              +--+ 
+|                           +----------+   +---+           | |              +--+ 
+|                           |          |   |   |           +-+                 | 
+|                           | ZC706    |   +---+           SW12             +--+ 
+|                           |          |   SW11                             |  | 
++---+                       |          |                                    +--+ 
+|   |GEM                    +----------+                                       | 
+|   |                                                                      +---+ 
++---+                                                                      |   | 
+|                                                                       USB|   | 
+|                                                                          |   | 
++---+                                                                      +---+ 
+|   |HDMI                                                                      + 
+|   |                                                                          + 
++---+                                                                          + 
+|                                                                              + 
++------------------------------------------------------------------------------+
+
+\be
+
+BIBLIOGRAPHY
+
+\tb Xilinx Zynq-7000 Extensible Processing Platform Technical Reference Manual
+
+\tb Xilinx Zynq-7000 EPP Software Developer's Guide
+
+\tb ARM Architecture Reference Manual
+
+\tb Cortex-A9 MPCore Technical Reference Manual
+
+\tb Cortex-A9 Technical Reference Manual
+
+WEB RESOURCES
+
+Much of the ARM documentation can be found on line. The following
+URL was correct at the time of writing for semiconductor area. You'll have to
+search the documentation using processor name for specific documentation.
+
+http://www.arm.com/
+
+SEE ALSO
+
+\tb Wind River Workbench User's Guide
+
+\tb VxWorks Kernel Programmer's Guide
+
+\tb VxWorks Architecture Supplement
+

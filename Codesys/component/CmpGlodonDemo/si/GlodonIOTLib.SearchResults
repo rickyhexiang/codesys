@@ -1,0 +1,49 @@
+---- do_access_IOT Matches (77 in 3 files) ----
+CmpGlodonDemo.c (c:\windriver\workspace\cmpglodondemo\source):void CDECL CDECL_EXT do_access_iot__main(do_access_iot_main_struct *p)
+CmpGlodonDemoDep.h (c:\windriver\workspace\cmpglodondemo\include):          { (RTS_VOID_FCTPTR)do_access_iot__main, "do_access_iot__main", 0x3E484BF2, 0x01000000 },\
+CmpGlodonDemoItf.h (c:\windriver\workspace\cmpglodondemo\include):typedef struct tagdo_access_iot_struct
+CmpGlodonDemoItf.h (c:\windriver\workspace\cmpglodondemo\include):	/* Member variables of do_access_IOT */
+CmpGlodonDemoItf.h (c:\windriver\workspace\cmpglodondemo\include):} do_access_iot_struct;
+CmpGlodonDemoItf.h (c:\windriver\workspace\cmpglodondemo\include): * <description>do_access_iot_main</description>
+CmpGlodonDemoItf.h (c:\windriver\workspace\cmpglodondemo\include):typedef struct tagdo_access_iot_main_struct
+CmpGlodonDemoItf.h (c:\windriver\workspace\cmpglodondemo\include):	do_access_iot_struct *pInstance;	/* VAR_INPUT */	
+CmpGlodonDemoItf.h (c:\windriver\workspace\cmpglodondemo\include):} do_access_iot_main_struct;
+CmpGlodonDemoItf.h (c:\windriver\workspace\cmpglodondemo\include):void CDECL CDECL_EXT do_access_iot__main(do_access_iot_main_struct *p);
+CmpGlodonDemoItf.h (c:\windriver\workspace\cmpglodondemo\include):typedef void (CDECL CDECL_EXT* PFDO_ACCESS_IOT__MAIN_IEC) (do_access_iot_main_struct *p);
+CmpGlodonDemoItf.h (c:\windriver\workspace\cmpglodondemo\include):#if defined(CMPGLODONDEMO_NOTIMPLEMENTED) || defined(DO_ACCESS_IOT__MAIN_NOTIMPLEMENTED)
+CmpGlodonDemoItf.h (c:\windriver\workspace\cmpglodondemo\include):	#define USE_do_access_iot__main
+CmpGlodonDemoItf.h (c:\windriver\workspace\cmpglodondemo\include):	#define EXT_do_access_iot__main
+CmpGlodonDemoItf.h (c:\windriver\workspace\cmpglodondemo\include):	#define GET_do_access_iot__main(fl)  ERR_NOTIMPLEMENTED
+CmpGlodonDemoItf.h (c:\windriver\workspace\cmpglodondemo\include):	#define CAL_do_access_iot__main(p0) 
+CmpGlodonDemoItf.h (c:\windriver\workspace\cmpglodondemo\include):	#define CHK_do_access_iot__main  FALSE
+CmpGlodonDemoItf.h (c:\windriver\workspace\cmpglodondemo\include):	#define EXP_do_access_iot__main  ERR_OK
+CmpGlodonDemoItf.h (c:\windriver\workspace\cmpglodondemo\include):	#define USE_do_access_iot__main
+CmpGlodonDemoItf.h (c:\windriver\workspace\cmpglodondemo\include):	#define EXT_do_access_iot__main
+CmpGlodonDemoItf.h (c:\windriver\workspace\cmpglodondemo\include):	#define GET_do_access_iot__main(fl)  CAL_CMGETAPI( "do_access_iot__main" ) 
+CmpGlodonDemoItf.h (c:\windriver\workspace\cmpglodondemo\include):	#define CAL_do_access_iot__main  do_access_iot__main
+CmpGlodonDemoItf.h (c:\windriver\workspace\cmpglodondemo\include):	#define CHK_do_access_iot__main  TRUE
+CmpGlodonDemoItf.h (c:\windriver\workspace\cmpglodondemo\include):	#define EXP_do_access_iot__main  s_pfCMRegisterAPI2( (const CMP_EXT_FUNCTION_REF*)"do_access_iot__main", (RTS_UINTPTR)do_access_iot__main, 1, 0x3E484BF2, 0x01000000) 
+CmpGlodonDemoItf.h (c:\windriver\workspace\cmpglodondemo\include):	#define USE_do_access_iot__main
+CmpGlodonDemoItf.h (c:\windriver\workspace\cmpglodondemo\include):	#define EXT_do_access_iot__main
+CmpGlodonDemoItf.h (c:\windriver\workspace\cmpglodondemo\include):	#define GET_do_access_iot__main(fl)  CAL_CMGETAPI( "do_access_iot__main" ) 
+CmpGlodonDemoItf.h (c:\windriver\workspace\cmpglodondemo\include):	#define CAL_do_access_iot__main  do_access_iot__main
+CmpGlodonDemoItf.h (c:\windriver\workspace\cmpglodondemo\include):	#define CHK_do_access_iot__main  TRUE
+CmpGlodonDemoItf.h (c:\windriver\workspace\cmpglodondemo\include):	#define EXP_do_access_iot__main  s_pfCMRegisterAPI2( (const CMP_EXT_FUNCTION_REF*)"do_access_iot__main", (RTS_UINTPTR)do_access_iot__main, 1, 0x3E484BF2, 0x01000000) 
+CmpGlodonDemoItf.h (c:\windriver\workspace\cmpglodondemo\include):	#define USE_CmpGlodonDemodo_access_iot__main
+CmpGlodonDemoItf.h (c:\windriver\workspace\cmpglodondemo\include):	#define EXT_CmpGlodonDemodo_access_iot__main
+CmpGlodonDemoItf.h (c:\windriver\workspace\cmpglodondemo\include):	#define GET_CmpGlodonDemodo_access_iot__main  ERR_OK
+CmpGlodonDemoItf.h (c:\windriver\workspace\cmpglodondemo\include):	#define CAL_CmpGlodonDemodo_access_iot__main  do_access_iot__main
+CmpGlodonDemoItf.h (c:\windriver\workspace\cmpglodondemo\include):	#define CHK_CmpGlodonDemodo_access_iot__main  TRUE
+CmpGlodonDemoItf.h (c:\windriver\workspace\cmpglodondemo\include):	#define EXP_CmpGlodonDemodo_access_iot__main  s_pfCMRegisterAPI2( (const CMP_EXT_FUNCTION_REF*)"do_access_iot__main", (RTS_UINTPTR)do_access_iot__main, 1, 0x3E484BF2, 0x01000000) 
+CmpGlodonDemoItf.h (c:\windriver\workspace\cmpglodondemo\include):	#define USE_do_access_iot__main
+CmpGlodonDemoItf.h (c:\windriver\workspace\cmpglodondemo\include):	#define EXT_do_access_iot__main
+CmpGlodonDemoItf.h (c:\windriver\workspace\cmpglodondemo\include):	#define GET_do_access_iot__main(fl)  CAL_CMGETAPI( "do_access_iot__main" ) 
+CmpGlodonDemoItf.h (c:\windriver\workspace\cmpglodondemo\include):	#define CAL_do_access_iot__main  do_access_iot__main
+CmpGlodonDemoItf.h (c:\windriver\workspace\cmpglodondemo\include):	#define CHK_do_access_iot__main  TRUE
+CmpGlodonDemoItf.h (c:\windriver\workspace\cmpglodondemo\include):	#define EXP_do_access_iot__main  s_pfCMRegisterAPI2( (const CMP_EXT_FUNCTION_REF*)"do_access_iot__main", (RTS_UINTPTR)do_access_iot__main, 1, 0x3E484BF2, 0x01000000) 
+CmpGlodonDemoItf.h (c:\windriver\workspace\cmpglodondemo\include):	#define USE_do_access_iot__main  PFDO_ACCESS_IOT__MAIN_IEC pfdo_access_iot__main;
+CmpGlodonDemoItf.h (c:\windriver\workspace\cmpglodondemo\include):	#define EXT_do_access_iot__main  extern PFDO_ACCESS_IOT__MAIN_IEC pfdo_access_iot__main;
+CmpGlodonDemoItf.h (c:\windriver\workspace\cmpglodondemo\include):	#define GET_do_access_iot__main(fl)  s_pfCMGetAPI2( "do_access_iot__main", (RTS_VOID_FCTPTR *)&pfdo_access_iot__main, (fl) | CM_IMPORT_EXTERNAL_LIB_FUNCTION, 0x3E484BF2, 0x01000000)
+CmpGlodonDemoItf.h (c:\windriver\workspace\cmpglodondemo\include):	#define CAL_do_access_iot__main  pfdo_access_iot__main
+CmpGlodonDemoItf.h (c:\windriver\workspace\cmpglodondemo\include):	#define CHK_do_access_iot__main  (pfdo_access_iot__main != NULL)
+CmpGlodonDemoItf.h (c:\windriver\workspace\cmpglodondemo\include):	#define EXP_do_access_iot__main   s_pfCMRegisterAPI2( (const CMP_EXT_FUNCTION_REF*)"do_access_iot__main", (RTS_UINTPTR)do_access_iot__main, 1, 0x3E484BF2, 0x01000000) 

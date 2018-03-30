@@ -1,0 +1,5 @@
+set WIND_BASE C:/WindRiver/vxworks-6.9
+set VSB_DIR C:/WindRiver/vxworks-6.9/target/lib
+set BSP_DIR C:/WindRiver/vxworks-6.9/target/config/xlnx_zynq7k
+set ANALYSIS_DKM_DIR C:/WindRiver/vxworks-6.9/target/lib/arm/ARMARCH7/common/dkm/analysis
+set PRJ_FULL_PATH C:/Work/zynq

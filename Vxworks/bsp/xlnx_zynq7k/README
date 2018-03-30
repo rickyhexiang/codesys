@@ -1,0 +1,89 @@
+
+         README: Xilinx Zynq-7000 board with CortexA9 MPCore
+
+This file contains board-specific information for the Xilinx Zynq-7000
+board with CortexA9 MPCore core tile. This file documents BSP interface 
+changes from previous software or hardware versions, and notifies the
+user of serious caveats that must be noted before using this BSP. 
+Additionally, the target board's reference entry (i.e. xlnx_zynq7k/target.ref) 
+provides board-specific information necessary to run VxWorks and should 
+be read fully before this BSP is used.
+
+--------------------------------------------------------------------------------
+RELEASE 6.9/8:
+
+    Released from Wind River for General Purpose Platform 6.9, VxWorks 6.9.4
+
+    Add 32MBytes of flash support for ZC706. (VXW6-23897) 
+
+RELEASE 6.9/7:
+
+    Released from Wind River for General Purpose Platform 6.9, VxWorks 6.9.4
+
+    Remove localTimerInit(). (VXW6-83017)
+    Add protection for system level control registers. (VXW6-83097)
+    Add prefetch support. (VXW6-83079)
+    Add ARM global timer support. (VXW6-83242)
+    Fix INCLUDE_ZYNQ7K_QSPI definition. (VXW6-83719)
+
+RELEASE 6.9/6:
+
+    Released from Wind River for General Purpose Platform 6.9, VxWorks 6.9.4
+
+    Update the method of creating BOOT.BIN to support new version bootgen. (VXW6-81785)
+    Correct ZYNQ7K_TIMERS_CLK definition. (VXW6-80653)
+    Update description to support OCD. (VXW6-80768)
+    Fixed zynq7kI2cIsr() and zynq7kI2cShow(). (VXW6-82671)
+
+RELEASE 6.9/5:
+
+    Released from Wind River for General Purpose Platform 6.9, VxWorks 6.9.3
+
+    Fix packet missing issue for the external PHY connected with EMIO interace. (VXW6-70152)
+
+RELEASE 6.9/4:
+
+    Released from Wind River for General Purpose Platform 6.9, VxWorks 6.9.3
+
+    Initialize GIC Priority Mask register for SMP mode. (VXW6-70150)
+    Reprogram the last several bytes in failed situation. (VXW6-70122)
+ 
+RELEASE 6.9/3:
+
+    Released from Wind River for General Purpose Platform 6.9, VxWorks 6.9.3
+
+    added support for the Programmable Logic. (WIND00417766)
+    fixed TTC timer issue. (WIND00419306)
+    fixed some PL330 DMA issues.
+    added support 4 banks of I2C eeprom. (WIND00418742)
+    correct ZYNQ7K_I2C_CLK definition. (WIND00422526)
+    added interrupt priority/sensitivity support. (WIND00420705)
+    correct INCLUDE_USB definition. (WIND00429232)
+    Added MMU_ATTR_CACHE_COHERENCY option for ZYNQ7K_MEM_EXTRA. (WIND00429878)
+    
+RELEASE 6.9/2:
+
+    Released from Wind River for General Purpose Platform 6.9, VxWorks 6.9.3
+
+    added support for ZC706 board. (WIND00395225)
+    added 1G RAM support in PS.
+    fixed smp mode timer issue. (WIND00394997)
+    fixed smp mode cache issue. (WIND00411916)
+    replace cacheXXX with CACHE_XXX. (WIND00409411)
+ 
+RELEASE 6.9/1:
+
+    Released from Wind River for General Purpose Platform 6.9, VxWorks 6.9.2
+
+    add DMA support
+    add EEPROM support
+    add "boot from QSPI flash" support
+    add TTC support
+    optimize L2 cache maintenance operation
+    optimize Ethernet driver to improve throughput capability
+
+RELEASE 6.9/0:
+
+    Released from Wind River for General Purpose Platform 6.9, VxWorks 6.9.2
+
+    Initial Release.

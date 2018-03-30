@@ -1,0 +1,1091 @@
+/* qspiFlashMem.c - Xilinx ZYNQ-7000 QSPI flash memory device driver */
+
+/*
+ * Copyright (c) 2012-2015 Wind River Systems, Inc.
+ *
+ * The right to copy, distribute, modify or otherwise make use
+ * of this software may be licensed only pursuant to the terms
+ * of an applicable Wind River license agreement.
+ */
+
+/*
+modification history
+--------------------
+04jan15,c_l  Add 32MBytes of flash support for ZC706. (VXW6-23897)
+10feb14,g_x  Reprogram the last several bytes if they are not pro-
+             grammed correctly. (VXW6-70122)
+             Wait the write progress completed in qspiFlashChipErase()
+             before return.
+01c,12apr13,y_c  delete some blanks at the end of line.
+01b,01sep12,fao  fix sysFlashSet memleak.(WIND00377855)
+01a,01jul12,clx  created from stm_spear13xx/01c
+*/
+
+/*
+DESCRIPTION
+The serial peripheral interface (QSPI) allows the device to exchange
+data with peripheral devices such as EEPROMs, real-time clocks, A/D converters,
+and ISDN devices. The QSPI is a full-duplex, synchronous, character-oriented
+channel that supports a simple interface (receive, transmit, clock and
+chipselects).
+
+This is a driver for the Xilinx's serial peripheral interface engine.
+It is intended for use by client drivers performing other high level
+functions.
+
+Xilinx ZYNQ-7000 on-board use qspi flash N25Q128(numonyx).
+
+Below are the public APIs in this driver:
+
+STATUS qspiFlashChipErase ()
+STATUS qspiFlashSectorErase (int addr)
+STATUS qspiFlashPageWrite (int addr, char *buf, int len)
+STATUS qspiFlashRead (int addr, char *buf, int len)
+
+This driver also includes a demo test function. To use it, define
+QSPI_FLASH_TEST in this file and then call zynq7kQspiFlashTest() to get the
+test result.
+*/
+
+#include "qspiFlashMem.h"
+
+LOCAL SEM_ID qspiDevSem = NULL;
+
+/*******************************************************************************
+*
+* qspiFlashModeSet - switch configuration value between linear read and I/O mode
+*
+* This routine switches configuration value between linear read and I/O mode.
+*
+* RETURNS: always OK
+*
+* ERRNO: N/A
+*/
+
+LOCAL STATUS qspiFlashModeSet
+    (
+    int mode
+    )
+    {
+    if (mode == LINEAR_MODE)
+        {
+        QSPI_REG_WRITE_32 (ZYNQ_QSPI_CR, CR_LIN_MODE);
+#if (SPI_BUS_TYPE == SPI_DUAL_8BIT)
+        QSPI_REG_WRITE_32 (ZYNQ_QSPI_LINEAR_CFG,
+                           ZYNQ_QSPI_LINEAR_EN |
+                           ZYNQ_QSPI_LINEAR_INST_READ |
+                           ZYNQ_QSPI_LINEAR_TWO_MEM |
+                           ZYNQ_QSPI_LINEAR_SEP_BUS);
+#else
+        QSPI_REG_WRITE_32 (ZYNQ_QSPI_LINEAR_CFG,
+                           ZYNQ_QSPI_LINEAR_EN |
+                           ZYNQ_QSPI_LINEAR_INST_READ);
+#endif /* (SPI_BUS_TYPE == SPI_DUAL_8BIT) */
+        }
+    else
+        {
+        QSPI_REG_WRITE_32 (ZYNQ_QSPI_CR, CR_IO_MODE);
+#if (SPI_BUS_TYPE == SPI_DUAL_8BIT)
+        QSPI_REG_WRITE_32 (ZYNQ_QSPI_LINEAR_CFG,
+                           ZYNQ_QSPI_LINEAR_TWO_MEM |
+                           ZYNQ_QSPI_LINEAR_SEP_BUS);
+#else
+        QSPI_REG_WRITE_32 (ZYNQ_QSPI_LINEAR_CFG, 0);
+#endif /* (SPI_BUS_TYPE == SPI_DUAL_8BIT) */
+        }
+
+    return OK;
+    }
+
+/*******************************************************************************
+*
+* qspiFlashInit1 - initialize Xilinx ZYNQ-7000 QSPI module.
+*
+* This function initializes Xilinx ZYNQ-7000 QSPI module.
+*
+* RETURNS: N/A.
+*
+* ERRNO
+*/
+
+LOCAL void qspiFlashInit1()
+    {
+    QSPI_REG_WRITE_32 (ZYNQ_QSPI_ER, ~ZYNQ_QSPI_ER_ENABLE);
+
+    /* use linear mode read */
+
+    qspiFlashModeSet (LINEAR_MODE);
+
+    /* disable all interrupts */
+
+    QSPI_REG_WRITE_32 (ZYNQ_QSPI_IDR, ZYNQ_QSPI_IXR_ALL);
+    QSPI_REG_WRITE_32 (ZYNQ_QSPI_ISR, ZYNQ_QSPI_IXR_ALL);
+
+    /* enable QSPI */
+
+    QSPI_REG_WRITE_32 (ZYNQ_QSPI_ER, ZYNQ_QSPI_ER_ENABLE);
+
+    /* set Rx/Tx FIFO threhold */
+
+    QSPI_REG_WRITE_32 (ZYNQ_QSPI_THLD, 1);
+    QSPI_REG_WRITE_32 (ZYNQ_QSPI_RHLD, 1);
+    }
+
+/*******************************************************************************
+*
+* qspiFlashInit2 - initialize Xilinx ZYNQ-7000 QSPI module muxtex semaphore.
+*
+* This function initializes Xilinx ZYNQ-7000 QSPI module muxtex semaphore.
+*
+* RETURNS: N/A.
+*
+* ERRNO
+*/
+
+LOCAL void qspiFlashInit2()
+    {
+    qspiDevSem = semMCreate (SEM_Q_PRIORITY | SEM_DELETE_SAFE |
+                             SEM_INVERSION_SAFE);
+    }
+
+/*******************************************************************************
+*
+* qspiFlashSetWriteEnable - send the flash write enable cmd to spi flash
+*
+* This routine sends the flash write enable cmd to spi flash
+*
+* RETURNS: always OK.
+*
+* ERRNO: N/A
+*/
+
+LOCAL STATUS qspiFlashSetWriteEnable()
+    {
+    int val = 0;
+
+    QSPI_REG_WRITE_32 (ZYNQ_QSPI_TXD1, QSPI_FLASH_CMD_WE);
+
+    /* set the device chip select and start manual transfer data */
+
+    QSPI_SET_CS;
+    QSPI_MAN_STRT;
+    while (!(QSPI_REG_READ_32 (ZYNQ_QSPI_ISR) & ZYNQ_QSPI_IXR_TXNF));
+
+    /* clear the dump data in Rx FIFO */
+
+    val = QSPI_REG_READ_32 (ZYNQ_QSPI_RXD);
+    QSPI_CLR_CS;
+
+    return OK;
+    }
+
+/*******************************************************************************
+*
+* qspiFlashStatusGet - get the flash status register value
+*
+* This routine gets the flash status register value
+*
+* RETURNS: STATUS
+*
+* ERRNO: N/A
+*/
+
+LOCAL int qspiFlashStatusGet()
+    {
+    int val;
+
+    QSPI_REG_WRITE_32 (ZYNQ_QSPI_TXD2, QSPI_FLASH_CMD_RDSR);
+
+    QSPI_SET_CS;
+    QSPI_MAN_STRT;
+
+    /* wait until the data in Tx FIFO are serialized out */
+
+    while(!(QSPI_REG_READ_32 (ZYNQ_QSPI_ISR) & ZYNQ_QSPI_IXR_TXNF));
+
+    val = QSPI_REG_READ_32 (ZYNQ_QSPI_RXD);
+
+    QSPI_CLR_CS;
+
+    /* only return the latest status byte */
+
+    return ((val >> 24) & 0xff);
+    }
+
+/*******************************************************************************
+*
+* qspiFlashWaitNonWip - wait a fixed time to make sure flash no in WIP status
+*
+* This routine waits a fixed time to make sure the flash no in WIP status
+*
+* RETURNS: OK or ERROR if flash still in WIP status after a fixed time
+*
+* ERRNO: N/A
+*/
+
+LOCAL int qspiFlashWaitNonWip()
+    {
+    int writeTimeoutCount = 0;
+    int status;
+
+    /* make sure the spi flash no in WIP status */
+
+    while (((status = qspiFlashStatusGet()) & SR_WIP) &&
+                                 (++writeTimeoutCount < WIP_TOUT))
+        sysMsDelay (1);
+
+    if (writeTimeoutCount == WIP_TOUT)
+        {
+        ZYNQ7K_QSPI_DBG_LOG("timeout error : flash busy in WIP. status = 0x%x \n",
+                                                         status, 2, 3, 4, 5, 6);
+        return ERROR;
+        }
+
+    return OK;
+    }
+
+/*******************************************************************************
+*
+* qspiFlashChipErase - erase whole chip, all bits in chip are set to 1.
+*
+* This routine erases the whole chip.
+*
+* RETURNS: OK or ERROR if erase fail.
+*
+* ERRNO: N/A
+*/
+
+STATUS qspiFlashChipErase ()
+    {
+    int val;
+    STATUS retVal = OK;
+
+    if (qspiDevSem != NULL)
+        semTake (qspiDevSem, WAIT_FOREVER);
+
+    qspiFlashModeSet (IO_MODE);
+
+    if (qspiFlashWaitNonWip ()!= OK)
+        {
+        ZYNQ7K_QSPI_DBG_LOG ("qspiFlashChipErase error : flash busy in WIP.\n",
+                                                              1, 2, 3, 4, 5, 6);
+        if (qspiDevSem != NULL)
+            semGive (qspiDevSem);
+        return ERROR;
+        }
+
+    qspiFlashSetWriteEnable ();
+
+    QSPI_REG_WRITE_32 (ZYNQ_QSPI_TXD1, QSPI_FLASH_CMD_BE);
+
+    /* set the device chip select and start manual transfer data */
+
+    QSPI_SET_CS;
+    QSPI_MAN_STRT;
+
+    /* wait until the data in Tx FIFO are serialized out */
+
+    while (!(QSPI_REG_READ_32 (ZYNQ_QSPI_ISR) & ZYNQ_QSPI_IXR_TXNF))
+       ;
+
+    /* deselect the device chip select */
+
+    QSPI_CLR_CS;
+
+    /* clear the dump data in Rx FIFO */
+
+    val = QSPI_REG_READ_32 (ZYNQ_QSPI_RXD);
+
+    if (qspiFlashWaitNonWip ()!= OK)
+        {
+        ZYNQ7K_QSPI_DBG_LOG ("qspiFlashChipErase error : wait WIP completed failed.\n",
+                                                              1, 2, 3, 4, 5, 6);
+        retVal = ERROR;
+        }
+
+    qspiFlashModeSet (LINEAR_MODE);
+
+    if (qspiDevSem != NULL)
+        semGive (qspiDevSem);
+
+    return retVal;
+    }
+
+/*******************************************************************************
+*
+* qspiFlashSectorErase - erase routine for flash driver, all bits in sector are
+*                        set to 1.
+*
+* This routine erases the specified sector.
+*
+* RETURNS: OK or ERROR if erase fail.
+*
+* ERRNO: N/A
+*/
+
+STATUS qspiFlashSectorErase
+    (
+    int addr
+    )
+    {
+    int cmd;
+
+    if ((addr < 0)||((addr + SPI_FLASH_SECTOR_SIZE) > SPI_FLASH_SIZE))
+        return (ERROR);
+
+    if (qspiDevSem != NULL)
+        semTake (qspiDevSem, WAIT_FOREVER);
+
+    qspiFlashModeSet (IO_MODE);
+
+#if (SPI_BUS_TYPE == SPI_DUAL_8BIT) 
+    addr >>= QSPI_FLASH_ADDR_SHIFT;
+#endif /* (SPI_BUS_TYPE == SPI_DUAL_8BIT) */      
+
+    if (qspiFlashWaitNonWip () != OK)
+        {
+        ZYNQ7K_QSPI_DBG_LOG ("spiFlashSectorErase error : flash busy in WIP.\n"
+                             "can't send erase cmd.\n", 1, 2, 3, 4, 5, 6);
+        if (qspiDevSem != NULL)
+            semGive (qspiDevSem);
+        return ERROR;
+        }
+
+    qspiFlashSetWriteEnable ();
+
+    cmd = QSPI_FLASH_CMD_SE | ((addr & 0xff0000) >> 8) |
+                              ((addr & 0x00ff00) << 8) |
+                              ((addr & 0xff) << 24);
+    QSPI_REG_WRITE_32 (ZYNQ_QSPI_TXD, cmd);
+
+    QSPI_SET_CS;
+    QSPI_MAN_STRT;
+    while (!(QSPI_REG_READ_32 (ZYNQ_QSPI_ISR) & ZYNQ_QSPI_IXR_TXNF))
+        ;
+
+    QSPI_CLR_CS;
+
+    cmd = QSPI_REG_READ_32 (ZYNQ_QSPI_RXD);
+
+    if (qspiFlashWaitNonWip () != OK)
+        {
+        ZYNQ7K_QSPI_DBG_LOG("spiFlashSectorErase error : flash busy in WIP, erase"
+                            "isn't finished.\n", 1, 2, 3, 4, 5, 6);
+        if (qspiDevSem != NULL)
+            semGive (qspiDevSem);
+        return ERROR;
+        }
+
+    qspiFlashModeSet (LINEAR_MODE);
+
+    if (qspiDevSem != NULL)
+        semGive (qspiDevSem);
+
+    return OK;
+    }
+
+/*******************************************************************************
+*
+* qspiFlashPageWrite - Write one page to flash, changing bits from 1 to 0
+*
+* This routine writes one page into flash.
+*
+* RETURNS: OK or ERROR if program fail.
+*
+* ERRNO: N/A
+*/
+
+STATUS qspiFlashPageWrite
+    (
+    int addr,
+    char *buf, /* buffer */
+    int len    /* size of bytes */
+    )
+    {
+    int cmd;
+    UINT32 *pu32Buf = (UINT32 *)buf;
+    char verifyData [SPI_FLASH_PAGE_SIZE - ZYNQ_QSPI_TXFIFO_LEN + 4];
+    int index = 0;
+    int savedLen = len;
+    int saveAddr = addr;
+
+    if ((len > SPI_FLASH_PAGE_SIZE) || (len <= 0) || (buf == NULL))
+        return ERROR;
+
+    if (qspiDevSem != NULL)
+        semTake (qspiDevSem, WAIT_FOREVER);
+
+    /*
+     * This loop will break when all data is written successfully first time,
+     * or else just retry second time for the last several bytes.
+     */
+
+    while (1)
+        {
+#if (SPI_BUS_TYPE == SPI_DUAL_8BIT)
+        saveAddr >>= QSPI_FLASH_ADDR_SHIFT;
+#endif /* (SPI_BUS_TYPE == SPI_DUAL_8BIT) */
+
+        qspiFlashModeSet (IO_MODE);
+
+        if (qspiFlashWaitNonWip () != OK)
+            {
+            ZYNQ7K_QSPI_DBG_LOG("spiFlashPageWrite error : flash busy in WIP.\n"
+                                "can't send page write cmd.\n", 1, 2, 3, 4, 5, 6);
+            if (qspiDevSem != NULL)
+                semGive (qspiDevSem);
+            return ERROR;
+            }
+
+        qspiFlashSetWriteEnable ();
+
+        cmd = QSPI_FLASH_CMD_PP | ((saveAddr & 0xff0000) >> 8) |
+                                  ((saveAddr & 0x00ff00) << 8) |
+                                  ((saveAddr & 0xff) << 24);
+
+        QSPI_REG_WRITE_32 (ZYNQ_QSPI_TXD, cmd);
+
+        while(len)
+            {
+            if (!(QSPI_REG_READ_32 (ZYNQ_QSPI_ISR) & ZYNQ_QSPI_IXR_TXFULL))
+                {
+                if (len >= 4)
+                    {
+                    QSPI_REG_WRITE_32 (ZYNQ_QSPI_TXD, pu32Buf[index / 4]);
+                    len -= 4;
+                    index += 4;
+                    }
+                else
+                    {
+                    if (len == 1)
+                        cmd = buf[index] | 0xFFFFFF00;
+                    else if (len == 2)
+                        cmd = buf[index] | (buf[index + 1] << 8) | 0xFFFF0000;
+                    else
+                        cmd = buf[index] | (buf[index + 1] << 8) | (buf[index + 2] << 16) | 0xFF000000;
+                    QSPI_REG_WRITE_32 (ZYNQ_QSPI_TXD, cmd);
+                    len = 0;
+                    }
+
+                if (len == 0)
+                    {
+                    QSPI_SET_CS;
+                    QSPI_MAN_STRT;
+                    }
+                }
+            else
+                {
+                QSPI_SET_CS;
+                QSPI_MAN_STRT;
+                }
+            }
+
+        while (!(QSPI_REG_READ_32 (ZYNQ_QSPI_ISR) & ZYNQ_QSPI_IXR_TXNF))
+             QSPI_MAN_STRT;
+
+        /* clear the dump data in Rx FIFO */
+
+        while ((QSPI_REG_READ_32 (ZYNQ_QSPI_ISR) & ZYNQ_QSPI_IXR_RXNEMTY))
+            cmd = QSPI_REG_READ_32 (ZYNQ_QSPI_RXD);
+
+        QSPI_CLR_CS;
+
+        /* wait until the program finished */
+
+        if (qspiFlashWaitNonWip () != OK)
+            {
+            ZYNQ7K_QSPI_DBG_LOG ("spiFlashPageWrite error : flash busy in WIP, page"
+                                 " write isn't finished.\n", 1, 2, 3, 4, 5, 6);
+            if (qspiDevSem != NULL)
+                semGive (qspiDevSem);
+            return ERROR;
+            }
+
+        qspiFlashModeSet (LINEAR_MODE);
+
+        /*
+         * In a heavy load system, the TxFIFO may not be fed in time for
+         * the last several words, in such situation, they are not written
+         * into the Flash memory, so the writting should be retry.
+         * The page program command appended with the address occupies 1 word
+         * in the TxFIFO.
+         */
+
+        if ((savedLen + 4) > ZYNQ_QSPI_TXFIFO_LEN)
+            {
+            len = savedLen - (ZYNQ_QSPI_TXFIFO_LEN - 4);
+
+            memcpy (verifyData, (char *) (QSPI_FLASH_LINR_BASE + addr +
+                                            (ZYNQ_QSPI_TXFIFO_LEN - 4)), len);
+            for (index = 0; index < len; index += 4)
+                {
+                if (memcmp (verifyData + index,
+                            buf + (ZYNQ_QSPI_TXFIFO_LEN - 4) + index,
+                            ((len - index) < 4) ? (len - index):4) != 0)
+                    {
+                    break;
+                    }
+                }
+            if (index >= len)
+                {
+                /* all data written successfully */
+
+                break;
+                }
+            else
+                {
+                addr = addr + (ZYNQ_QSPI_TXFIFO_LEN - 4) + index;
+                saveAddr = addr;
+                len = savedLen - (ZYNQ_QSPI_TXFIFO_LEN - 4) - index;
+                buf = buf + (ZYNQ_QSPI_TXFIFO_LEN - 4) + index;
+                pu32Buf = (UINT32 *)buf;
+                index = 0;
+                savedLen = len;
+                }
+            }
+        else
+            {
+            break;
+            }
+        }
+
+    if (qspiDevSem != NULL)
+        semGive (qspiDevSem);
+
+    return OK;
+    }
+
+/*******************************************************************************
+*
+* qspiFlashRead - flash read function.
+*
+* This routine reads len bytes data from flash addr to buf.
+*
+* RETURNS: OK or ERROR if program fail.
+*
+* ERRNO: N/A
+*/
+
+STATUS qspiFlashRead
+    (
+    int addr,
+    char *buf,
+    int len
+    )
+    {
+    if ((addr < 0) || (buf == NULL) || (len < 0) || ((addr + len) > SPI_FLASH_SIZE))
+        return ERROR;
+
+    if (qspiDevSem != NULL)
+        semTake (qspiDevSem, WAIT_FOREVER);
+
+    memcpy (buf, (char *) (QSPI_FLASH_LINR_BASE + addr), len);
+
+    if (qspiDevSem != NULL)
+        semGive (qspiDevSem);
+    return OK;
+    }
+
+/*******************************************************************************
+*
+* sysFlashGet - get the contents of flash memory
+*
+* This routine copies the contents of flash memory into a specified
+* string.
+*
+* RETURNS: OK, or ERROR if access is outside the flash memory range.
+*
+* SEE ALSO: sysFlashSet()
+*
+* INTERNAL
+* If multiple tasks are calling sysFlashSet() and sysFlashGet(),
+* they should use a semaphore to ensure mutually exclusive access.
+*/
+
+STATUS sysFlashGet
+    (
+    char *  string,     /* where to copy flash memory      */
+    int     strLen,     /* maximum number of bytes to copy */
+    int     offset      /* byte offset into flash memory   */
+    )
+    {
+    return qspiFlashRead (offset, string, strLen);
+    }
+
+/*******************************************************************************
+*
+* qspiFlashSetOneSector - write to one sector flash memory
+*
+* This routine copies a specified string into one sector flash memory.
+*
+* If the specified string must be overlaid on the contents of flash memory,
+* define FLASH_OVERLAY in config.h.
+*
+* RETURNS: OK, or ERROR if the write fails.
+*
+* SEE ALSO: sysFlashSet()
+*/
+
+LOCAL STATUS qspiFlashSetOneSector
+    (
+    char *  string,     /* string to be copied into flash memory */
+    int     byteLen,    /* maximum number of bytes to copy       */
+    int     offset      /* byte offset into flash memory         */
+    )
+    {
+    UINT32 startSec;
+    char * tempBuf;
+#ifdef FLASH_OVERLAY
+    UINT32 i;
+#endif
+
+    if ((tempBuf = memalign (4, QSPI_FLASH_SECTOR_SIZE)) == NULL)
+        return (ERROR);
+
+    if (qspiFlashRead (offset, tempBuf, byteLen) != OK)
+        {
+        free (tempBuf);
+        return (ERROR);
+        }
+
+    /* see if contents are actually changing */
+
+    if (bcmp (tempBuf, string, byteLen) == 0)
+        {
+        free (tempBuf);
+        return (OK);
+        }
+
+    startSec = ((UINT32)offset) / QSPI_FLASH_SECTOR_SIZE;
+
+#ifdef FLASH_OVERLAY
+
+    /* first save the current data in this sector */
+
+    if (qspiFlashRead (startSec * QSPI_FLASH_SECTOR_SIZE, tempBuf,
+                   QSPI_FLASH_SECTOR_SIZE) != OK)
+        {
+        free (tempBuf);
+        return (ERROR);
+        }
+
+    bcopy (string, tempBuf + (offset % QSPI_FLASH_SECTOR_SIZE), byteLen);
+#else
+    bcopy (string, tempBuf, byteLen);
+#endif  /* FLASH_OVERLAY */
+
+    /* erase sector */
+
+    if (qspiFlashSectorErase (offset) == ERROR)
+        {
+        free (tempBuf);
+        return (ERROR);
+        }
+
+    /* program device */
+
+#ifdef FLASH_OVERLAY
+    for (i = 0; i < (QSPI_FLASH_SECTOR_SIZE / SPI_FLASH_PAGE_SIZE); i++)
+        {
+        if ((qspiFlashPageWrite ((startSec * QSPI_FLASH_SECTOR_SIZE +
+            i * SPI_FLASH_PAGE_SIZE),(char *)(tempBuf + i * SPI_FLASH_PAGE_SIZE),
+            SPI_FLASH_PAGE_SIZE))!= OK)
+            {
+            free (tempBuf);
+            return (ERROR);
+            }
+        }
+#else
+    if (qspiFlashPageWrite ((char *)(offset), string, byteLen) != OK)
+        {
+        free (tempBuf);
+        return (ERROR);
+        }
+#endif /* FLASH_OVERLAY */
+
+    free (tempBuf);
+    return (OK);
+    }
+
+/*******************************************************************************
+*
+* qspiFlashSetTwoSector - write to two sectors flash memory
+*
+* This routine copies a specified string into two sectors flash memory.
+*
+* If the specified string must be overlaid on the contents of flash memory,
+* define FLASH_OVERLAY in config.h.
+*
+* RETURNS: OK, or ERROR if the write fails.
+*
+* SEE ALSO: sysFlashSet()
+*/
+
+LOCAL STATUS qspiFlashSetTwoSector
+    (
+    char *  string,     /* string to be copied into flash memory */
+    int     byteLen,    /* maximum number of bytes to copy       */
+    int     offset      /* byte offset into flash memory         */
+    )
+    {
+    UINT32 startSec;
+    UINT32 eraseLen;
+    UINT32 startOff;
+    char * tempBuf;
+#ifdef FLASH_OVERLAY
+    UINT32 i;
+#endif
+
+    eraseLen = QSPI_FLASH_SECTOR_SIZE * 2;
+    if ((tempBuf = memalign (4, eraseLen)) == NULL)
+        return (ERROR);
+
+    startSec = ((UINT32)offset) / eraseLen;
+    startOff = offset % eraseLen;
+
+    /* first save the current data in this sector */
+
+    if (qspiFlashRead (startSec * eraseLen, tempBuf, eraseLen) != OK)
+        {
+        free (tempBuf);
+        return (ERROR);
+        }
+
+    /* see if contents are actually changing */
+
+    if (bcmp (tempBuf + startOff, string, byteLen) == 0)
+        {
+        free (tempBuf);
+        return (OK);
+        }
+
+    bcopy (string, tempBuf + startOff, byteLen);
+
+    /* erase sector */
+
+    if (qspiFlashSectorErase (startSec * eraseLen) == ERROR)
+        {
+        free (tempBuf);
+        return (ERROR);
+        }
+
+    /* program device */
+
+#ifdef FLASH_OVERLAY
+    for (i = 0; i < (eraseLen / SPI_FLASH_PAGE_SIZE); i++)
+        {
+        if ((qspiFlashPageWrite (
+            (startSec * eraseLen + i * SPI_FLASH_PAGE_SIZE),
+            (char *)(tempBuf + i * SPI_FLASH_PAGE_SIZE),
+            SPI_FLASH_PAGE_SIZE))!= OK)
+            {
+            free (tempBuf);
+            return (ERROR);
+            }
+        }
+#else
+    if (startOff <= QSPI_FLASH_SECTOR_SIZE)
+        {
+
+        /* write to the first sector, should not change the second sector */
+
+        if (qspiFlashPageWrite ((char *)(offset), string, byteLen) != OK)
+            {
+            free (tempBuf);
+            return (ERROR);
+            }
+
+        for (i = 0; i < (QSPI_FLASH_SECTOR_SIZE / SPI_FLASH_PAGE_SIZE); i++)
+            {
+            if ((qspiFlashPageWrite (
+                (startSec * eraseLen + QSPI_FLASH_SECTOR_SIZE +
+                i * SPI_FLASH_PAGE_SIZE),
+                (char *)(tempBuf + QSPI_FLASH_SECTOR_SIZE +
+                i * SPI_FLASH_PAGE_SIZE),
+                SPI_FLASH_PAGE_SIZE))!= OK)
+                {
+                free (tempBuf);
+                return (ERROR);
+                }
+            }
+        }
+    else
+        {
+
+        /* write to the second sector, should not change the first sector */
+
+        if (qspiFlashPageWrite ((char *)(offset), string, byteLen) != OK)
+            {
+            free (tempBuf);
+            return (ERROR);
+            }
+
+        for (i = 0; i < (QSPI_FLASH_SECTOR_SIZE / SPI_FLASH_PAGE_SIZE); i++)
+            {
+            if ((qspiFlashPageWrite (
+                (startSec * eraseLen + i * SPI_FLASH_PAGE_SIZE),
+                (char *)(tempBuf + i * SPI_FLASH_PAGE_SIZE),
+                SPI_FLASH_PAGE_SIZE))!= OK)
+                {
+                free (tempBuf);
+                return (ERROR);
+                }
+            }
+        }
+
+#endif /* FLASH_OVERLAY */
+
+    free (tempBuf);
+    return (OK);
+    }
+
+/*******************************************************************************
+*
+* sysFlashSet - write to flash memory
+*
+* This routine copies a specified string into flash memory.
+*
+* If the specified string must be overlaid on the contents of flash memory,
+* define FLASH_OVERLAY in config.h.
+*
+* RETURNS: OK, or ERROR if the write fails or the input parameters are
+* out of range.
+*
+* SEE ALSO: sysFlashGet()
+*
+* INTERNAL
+* If multiple tasks are calling sysFlashSet() and sysFlashGet(),
+* they should use a semaphore to ensure mutually exclusive access to flash
+* memory.
+*/
+
+STATUS sysFlashSet
+    (
+    char *  string,     /* string to be copied into flash memory */
+    int     byteLen,    /* maximum number of bytes to copy       */
+    int     offset      /* byte offset into flash memory         */
+    )
+    {
+    STATUS status;
+
+    /* limited to one sector */
+
+    if ((offset < 0) || (byteLen < 0) ||
+        (((offset % QSPI_FLASH_SECTOR_SIZE) + byteLen) > SPI_FLASH_SECTOR_SIZE))
+        return (ERROR);
+
+#if (SPI_BUS_TYPE == SPI_DUAL_8BIT)
+    {
+
+    /*
+     * The Quad-SPI controller sends erase command to both chips,
+     * so two sectors will be erased on every erase command.
+     */
+
+    status = qspiFlashSetTwoSector(string, byteLen, offset);
+    }
+#else
+    {
+
+    /*
+     * The Quad-SPI controller sends erase command to one chip,
+     * so a sector will be erased on every erase command.
+     */
+
+    status = qspiFlashSetOneSector(string, byteLen, offset);
+    }
+#endif /* (SPI_BUS_TYPE == SPI_DUAL_8BIT) */
+
+    return (status);
+    }
+
+#ifdef QSPI_FLASH_TEST
+
+/*******************************************************************************
+*
+* zynq7kQspiFlashTest - Flash driver Test Function
+*
+* RETURNS: OK or ERROR
+*
+* ERRNO
+*/
+
+STATUS zynq7kQspiFlashTest (void)
+{
+    UINT32 i, j;
+    UINT32 * pBuf;
+
+    pBuf = (UINT32*)malloc(SPI_FLASH_SECTOR_SIZE);
+
+    if (pBuf == NULL)
+        {
+        printf ("malloc for pBuf failed.\n");
+        return ERROR;
+        }
+
+    printf ("Flash information:\n");
+    printf ("       Flash size: 0x%02x\n", SPI_FLASH_SIZE);
+    printf (" Erase block size: 0x%02x\n", SPI_FLASH_SECTOR_SIZE);
+    printf ("  Erase block num: 0x%02x\n", SPI_FLASH_SECTOR_NUM);
+    switch (SPI_BUS_TYPE)
+        {
+        case SPI_SINGLE_4BIT:
+             printf ("         Bus type: SPI_SINGLE_4BIT\n\n");
+             break;
+        case SPI_DUAL_8BIT:
+             printf ("         Bus type: SPI_DUAL_8BIT\n\n");
+             break;
+        case SPI_DUAL_4BIT:
+             printf ("         Bus type: SPI_DUAL_4BIT\n\n");
+             break;
+        case SPI_SINGLE_LEGACY:
+             printf ("         Bus type: SPI_SINGLE_LEGACY\n\n");
+             break;
+        default:
+             printf ("         Bus type: unknown\n\n");
+             break;
+        }
+    printf ("test case 1: erase, write & read sector.\n");
+
+    /* erase & write per sector, from [0 ~ FLASH_SECTOR_NUM / 2] sectors */
+
+    for (i = 0; i < SPI_FLASH_SECTOR_NUM / 2; i++)
+        {
+        /* fill the wBuf for sector i. */
+
+        for (j = 0; j < SPI_FLASH_SECTOR_SIZE / 4; j++)
+            pBuf[j] = (i << 16) | j;
+
+        /* sector erased */
+
+        if (qspiFlashSectorErase (i * SPI_FLASH_SECTOR_SIZE) == ERROR)
+            {
+            printf("erase sector %d failed.\n", i);
+            goto ERR_RETURN;
+            }
+
+        /* sector writed */
+
+        for (j = 0; j < SPI_FLASH_SECTOR_SIZE/SPI_FLASH_PAGE_SIZE; j++)
+            {
+            if (qspiFlashPageWrite (i * SPI_FLASH_SECTOR_SIZE + j * SPI_FLASH_PAGE_SIZE,
+                      (char *)&pBuf[j * SPI_FLASH_PAGE_SIZE / 4], SPI_FLASH_PAGE_SIZE) == ERROR)
+                {
+                printf ("write to sector %d failed.\n", i);
+                goto ERR_RETURN;
+                }
+            }
+        printf (".");
+        if (i%16 == 15)
+            printf ("\n");
+        }
+
+    printf ("test case 2: erase, write & read sector.\n");
+
+    /* erase sectors from [ SPI_FLASH_SECTOR_NUM / 2 ~ SPI_FLASH_SECTOR_NUM] */
+
+    for (i = SPI_FLASH_SECTOR_NUM / 2; i < SPI_FLASH_SECTOR_NUM; i++)
+        {
+        /* sector erased */
+
+        if (qspiFlashSectorErase (i * SPI_FLASH_SECTOR_SIZE) == ERROR)
+            {
+            printf ("erase sector %d failed.\n", i);
+            goto ERR_RETURN;
+            }
+        printf (".");
+        if (i%16 == 15)
+            printf ("\n");
+        }
+
+    /* write sectors from [ SPI_FLASH_SECTOR_NUM / 2 ~ SPI_FLASH_SECTOR_NUM] */
+
+    for (i = SPI_FLASH_SECTOR_NUM / 2; i < SPI_FLASH_SECTOR_NUM; i++)
+        {
+        /* fill the wBuf for sector i. */
+
+        for (j = 0; j < SPI_FLASH_SECTOR_SIZE / 4; j++)
+            pBuf[j] = (i << 16) | j;
+
+        /* sector writed */
+
+        for (j = 0; j < SPI_FLASH_SECTOR_SIZE/SPI_FLASH_PAGE_SIZE; j++)
+            {
+            if (qspiFlashPageWrite (i * SPI_FLASH_SECTOR_SIZE + j * SPI_FLASH_PAGE_SIZE,
+                (char *)&pBuf[j * SPI_FLASH_PAGE_SIZE / 4], SPI_FLASH_PAGE_SIZE) == ERROR)
+                {
+                printf ("write to sector %d failed.\n", i);
+                goto ERR_RETURN;
+                }
+            }
+        printf (".");
+        if (i%16 == 15)
+            printf ("\n");
+        }
+
+    printf ("test case 3: read sector.\n");
+
+    /* sector read */
+
+    for (i = 0; i < SPI_FLASH_SECTOR_NUM; i++)
+        {
+        if (qspiFlashRead (i * SPI_FLASH_SECTOR_SIZE, (char *)pBuf,
+                           SPI_FLASH_SECTOR_SIZE) == ERROR)
+            {
+            printf("read from sector %d failed.\n", i);
+            goto ERR_RETURN;
+            }
+        for (j = 0; j < SPI_FLASH_SECTOR_SIZE / 4; j++)
+            {
+            if (pBuf[j] != ((i << 16) | j))
+                {
+                printf ("the value read from index 0x%x of "
+                        "sector %d is : 0x%x\n", j, i, pBuf[j]);
+                goto ERR_RETURN;
+                }
+            }
+        printf (".");
+        if (i%16 == 15)
+            printf ("\n");
+        }
+
+    printf ("test case 4: chip erase.\n");
+
+    if (qspiFlashChipErase () != OK)
+        {
+        printf ("chip erase failed!\n");
+        goto ERR_RETURN;
+        }
+
+    for (i = 0; i < SPI_FLASH_SECTOR_NUM; i++)
+        {
+        if (qspiFlashRead (i * SPI_FLASH_SECTOR_SIZE, (char *)pBuf,
+                           SPI_FLASH_SECTOR_SIZE) == ERROR)
+            {
+            printf("read from sector %d failed.\n", i);
+            goto ERR_RETURN;
+            }
+
+        for (j = 0; j < SPI_FLASH_SECTOR_SIZE / 4; j++)
+            {
+            if (pBuf[j] != 0xFFFFFFFF)
+                {
+                printf("detect error at index 0x%x of "
+                       "sector %d, value is 0x%x\n", j, i, pBuf[j]);
+                goto ERR_RETURN;
+                }
+            }
+        }
+
+    printf("test case passed.\n");
+
+    free(pBuf);
+    return OK;
+
+ERR_RETURN:
+    free (pBuf);
+    return ERROR;
+}
+
+#endif /* QSPI_FLASH_TEST */
+
